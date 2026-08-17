@@ -2,8 +2,8 @@ name: Watch List Email
 
 on:
   schedule:
-    # 22:00 UTC, Mon-Fri (after US market close)
-    - cron: "0 16 36 * 1-5"
+    # 16:34 UTC, Mon-Fri (after US market close)
+    - cron: "34 16 * * 1-5"
   workflow_dispatch: {}
 
 jobs:
