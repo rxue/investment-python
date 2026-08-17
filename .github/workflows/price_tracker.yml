@@ -2,8 +2,8 @@ name: Watch List Email
 
 on:
   schedule:
-    # 16:34 UTC, Mon-Fri (after US market close)
-    - cron: "41 16 * * 1-5"
+    # 22:00 UTC, Mon-Fri (after US market close)
+    - cron: "* 22 * * 1-5"
   workflow_dispatch: {}
 
 jobs:
@@ -34,5 +34,5 @@ jobs:
           password: ${{ secrets.MAIL_PASSWORD }}
           from: ${{ secrets.MAIL_USERNAME }}
           to: ${{ secrets.MAIL_TO }}
-          subject: "Watch List - ${{ github.run_id }}"
+          subject: "Stock Price Watch List - ${{ github.run_id }}"
           body: file://watch_list_output.txt
