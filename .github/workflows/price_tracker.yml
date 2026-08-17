@@ -1,0 +1,38 @@
+name: Watch List Email
+
+on:
+  schedule:
+    # 22:00 UTC, Mon-Fri (after US market close)
+    - cron: "0 22 * * 1-5"
+  workflow_dispatch: {}
+
+jobs:
+  run-and-email:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies
+        run: uv sync --frozen
+
+      - name: Run watch list
+        run: |
+          uv run investment price FIA1S.HE,ELISA.HE,NOVO-B.CO,STZ,GIS,BNTX,XOM > watch_list_output.txt
+
+      - name: Send email
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          from: ${{ secrets.MAIL_USERNAME }}
+          to: ${{ secrets.MAIL_TO }}
+          subject: "Watch List - ${{ github.run_id }}"
+          body: file://watch_list_output.txt
