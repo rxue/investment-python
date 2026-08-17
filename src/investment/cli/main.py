@@ -10,7 +10,11 @@ import argparse
 from datetime import date
 from typing import Sequence
 
+import pandas as pd
+
 from investment.marketquote import fetcher
+
+from investment.cli.watch_list import PriceRow
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -20,7 +24,7 @@ def _build_parser() -> argparse.ArgumentParser:
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     price_parser = subparsers.add_parser("price", help="Fetch the price for a symbol.")
-    price_parser.add_argument("symbol", help="Company ticker symbol, e.g. AAPL")
+    price_parser.add_argument("symbols", help="Company ticker symbols delimited by comma, e.g. AAPL,ELISA.HE")
     price_parser.add_argument(
         "--date",
         type=date.fromisoformat,
@@ -44,8 +48,18 @@ def _build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def _run_price(symbol: str, target_date: date | None) -> dict:
-    return fetcher.fetch_price(symbol, target_date)._asdict()
+def _run_price(symbols: str, target_date: date | None) -> pd.DataFrame:
+    """Fetch the price for one or more comma-delimited symbols.
+
+    Returns a pandas DataFrame with one row per symbol.
+    """
+    rows = []
+    for symbol in symbols.split(","):
+        symbol = symbol.strip()
+        price = fetcher.fetch_price(symbol, target_date)
+        price_row=PriceRow(symbol, price)
+        rows.append(price_row.to_readable_dict())
+    return pd.DataFrame(rows)
 
 
 def main(argv: Sequence[str] | None = None) -> None:
@@ -53,15 +67,14 @@ def main(argv: Sequence[str] | None = None) -> None:
     args = parser.parse_args(argv)
 
     if args.command == "price":
-        result = _run_price(args.symbol, args.date)
+        prices = _run_price(args.symbols, args.date)
+        print(prices.to_string(index=False))
     elif args.command == "fundamentals":
-        result = fetcher.fetch_fundamental_metrics(args.symbol, args.metrics)
+        metrics = fetcher.fetch_fundamental_metrics(args.symbol, args.metrics)
+        for key, value in metrics.items():
+            print(f"{key}: {value}")
     else:  # pragma: no cover - guarded by argparse's `required=True`
         parser.error(f"Unknown command: {args.command}")
-        return
-
-    for key, value in result.items():
-        print(f"{key}: {value}")
 
 
 if __name__ == "__main__":
