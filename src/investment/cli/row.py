@@ -1,4 +1,4 @@
-from typing import NamedTuple
+from typing import NamedTuple, Any
 
 from investment.vo.value_objects import Price
 
@@ -19,10 +19,21 @@ class PriceRow(NamedTuple):
     company:str
     price:Price
 
-    def to_readable_dict(self) -> dict:
+    def to_readable_dict(self) -> dict[str,Any]:
         return {
             "company": self.company,
             "price": self.price.cent_value / 100,
             "currency": self.price.currency,
             "time": _readable_time(self.price.timestamp),
         }
+
+class MetricsRow(NamedTuple):
+    company:str
+    metrics:dict[str,Any]
+
+    def to_readable_dict(self) -> dict[str,Any]:
+        result = {"company":self.company}
+        for metric,value in self.metrics.items():
+            result[metric] = value
+        return result
+

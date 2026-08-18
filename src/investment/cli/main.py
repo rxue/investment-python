@@ -4,17 +4,25 @@ Usage examples::
 
     investment-python price AAPL
     investment-python price AAPL --date 2026-08-01
-    investment-python fundamentals AAPL --metrics trailingPE dividendYield
+    investment-python metrics AAPL --metrics trailingPE dividendYield
 """
 import argparse
 from datetime import date
+from enum import StrEnum
 from typing import Sequence
 
 import pandas as pd
 
 from investment.marketquote import fetcher
 
-from investment.cli.watch_list import PriceRow
+from investment.cli.row import PriceRow
+
+from investment.cli.row import MetricsRow
+
+
+class Command(StrEnum):
+    PRICE = "price"
+    METRICS = "metrics"
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -23,7 +31,7 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
 
-    price_parser = subparsers.add_parser("price", help="Fetch the price for a symbol.")
+    price_parser = subparsers.add_parser(Command.PRICE, help="Fetch the price for a symbol.")
     price_parser.add_argument("symbols", help="Company ticker symbols delimited by comma, e.g. AAPL,ELISA.HE")
     price_parser.add_argument(
         "--date",
@@ -33,16 +41,15 @@ def _build_parser() -> argparse.ArgumentParser:
         "Defaults to the current quoted price.",
     )
 
-    fundamentals_parser = subparsers.add_parser(
-        "fundamentals", help="Fetch fundamental metrics for a symbol."
+    metrics_parser = subparsers.add_parser(
+        Command.METRICS, help="Fetch metrics for symbols."
     )
-    fundamentals_parser.add_argument("symbol", help="Company ticker symbol, e.g. AAPL")
-    fundamentals_parser.add_argument(
-        "--metrics",
-        nargs="+",
+    metrics_parser.add_argument("symbols", help="Company ticker symbols delimited by comma, e.g. AAPL,ELISA.HE")
+    metrics_parser.add_argument(
+        "--names",
         required=True,
-        choices=[metric.value for metric in fetcher.FundamentalMetric],
-        help="One or more fundamental metrics to fetch.",
+        help="One or more metrics to fetch, delimited by comma, e.g. PRICE,TRAILING_PE. "
+        f"Choose from {', '.join(metric.name for metric in fetcher.Metric)}.",
     )
 
     return parser
@@ -61,18 +68,34 @@ def _run_price(symbols: str, target_date: date | None) -> pd.DataFrame:
         rows.append(price_row.to_readable_dict())
     return pd.DataFrame(rows)
 
+def _run_metrics(symbols: str, names: str) -> pd.DataFrame:
+    metric_names = [name.strip() for name in names.split(",")]
+    try:
+        metric_list = [fetcher.Metric[name] for name in metric_names]
+    except KeyError as exc:
+        valid_names = ", ".join(metric.name for metric in fetcher.Metric)
+        raise SystemExit(
+            f"investment metrics: error: argument --names: invalid choice: {exc.args[0]!r} "
+            f"(choose from {valid_names})"
+        ) from None
+    rows = []
+    for symbol in symbols.split(","):
+        symbol = symbol.strip()
+        metric_values = fetcher.fetch_current_metrics(symbol, metric_list)
+        metrics_row = MetricsRow(symbol, metric_values)
+        rows.append(metrics_row.to_readable_dict())
+    return pd.DataFrame(rows)
 
 def main(argv: Sequence[str] | None = None) -> None:
     parser = _build_parser()
     args = parser.parse_args(argv)
 
-    if args.command == "price":
+    if args.command == Command.PRICE:
         prices = _run_price(args.symbols, args.date)
         print(prices.to_string(index=False))
-    elif args.command == "fundamentals":
-        metrics = fetcher.fetch_fundamental_metrics(args.symbol, args.metrics)
-        for key, value in metrics.items():
-            print(f"{key}: {value}")
+    elif args.command == Command.METRICS:
+        metrics = _run_metrics(args.symbols, args.names)
+        print(metrics.to_string(index=False))
     else:  # pragma: no cover - guarded by argparse's `required=True`
         parser.error(f"Unknown command: {args.command}")
 
