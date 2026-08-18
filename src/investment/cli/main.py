@@ -46,10 +46,15 @@ def _build_parser() -> argparse.ArgumentParser:
         help="One or more metrics to fetch, delimited by comma, e.g. PRICE,TRAILING_PE. "
         f"Choose from {', '.join(metric.name for metric in fetcher.Metric)}.",
     )
-    metrics_parser.add_argument(
+    company_source_group = metrics_parser.add_mutually_exclusive_group(required=True)
+    company_source_group.add_argument(
         "--company-symbols",
-        required=True,
         help="Company ticker symbols delimited by comma, e.g. AAPL,ELISA.HE",
+    )
+    company_source_group.add_argument(
+        "--company-csv",
+        help="Path or URL to a company CSV file with a 'Yahoo Company Symbol' column, "
+        "e.g. https://gist.githubusercontent.com/rxue/7ec0914a8af1525d97e8dfd2ac5d61d7/raw/companies.csv",
     )
 
     return parser
@@ -67,6 +72,17 @@ def _run_price(symbols: str, target_date: date | None) -> pd.DataFrame:
         price_row=PriceRow(symbol, price)
         rows.append(price_row.to_readable_dict())
     return pd.DataFrame(rows)
+
+def _load_company_symbols(csv_source: str) -> str:
+    """Load comma-delimited Yahoo ticker symbols from a company CSV file.
+
+    ``csv_source`` may be a local file path or an http(s) URL. The CSV must
+    contain a "Yahoo Company Symbol" column, e.g.
+    https://gist.githubusercontent.com/rxue/7ec0914a8af1525d97e8dfd2ac5d61d7/raw/companies.csv
+    """
+    companies = pd.read_csv(csv_source)
+    return ",".join(companies["Yahoo Company Symbol"].astype(str))
+
 
 def _run_metrics(symbols: str, names: str) -> pd.DataFrame:
     metric_names = [name.strip() for name in names.split(",")]
@@ -93,7 +109,8 @@ def main(argv: Sequence[str] | None = None) -> None:
         prices = _run_price(args.symbols, args.date)
         print(prices.to_string(index=False))
     elif args.command == Command.METRICS:
-        metrics = _run_metrics(args.company_symbols, args.names)
+        company_symbols = args.company_symbols or _load_company_symbols(args.company_csv)
+        metrics = _run_metrics(company_symbols, args.names)
         print(metrics.to_string(index=False))
     else:  # pragma: no cover - guarded by argparse's `required=True`
         parser.error(f"Unknown command: {args.command}")
