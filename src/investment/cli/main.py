@@ -4,7 +4,7 @@ Usage examples::
 
     investment-python price AAPL
     investment-python price AAPL --date 2026-08-01
-    investment-python metrics AAPL --metrics trailingPE dividendYield
+    investment-python metrics PRICE,TRAILING_PE --company-symbols AAPL
 """
 import argparse
 from datetime import date
@@ -16,9 +16,6 @@ import pandas as pd
 from investment.marketquote import fetcher
 
 from investment.cli.row import PriceRow
-
-from investment.cli.row import MetricsRow
-
 
 class Command(StrEnum):
     PRICE = "price"
@@ -44,12 +41,15 @@ def _build_parser() -> argparse.ArgumentParser:
     metrics_parser = subparsers.add_parser(
         Command.METRICS, help="Fetch metrics for symbols."
     )
-    metrics_parser.add_argument("symbols", help="Company ticker symbols delimited by comma, e.g. AAPL,ELISA.HE")
     metrics_parser.add_argument(
-        "--names",
-        required=True,
+        "names",
         help="One or more metrics to fetch, delimited by comma, e.g. PRICE,TRAILING_PE. "
         f"Choose from {', '.join(metric.name for metric in fetcher.Metric)}.",
+    )
+    metrics_parser.add_argument(
+        "--company-symbols",
+        required=True,
+        help="Company ticker symbols delimited by comma, e.g. AAPL,ELISA.HE",
     )
 
     return parser
@@ -81,9 +81,8 @@ def _run_metrics(symbols: str, names: str) -> pd.DataFrame:
     rows = []
     for symbol in symbols.split(","):
         symbol = symbol.strip()
-        metric_values = fetcher.fetch_current_metrics(symbol, metric_list)
-        metrics_row = MetricsRow(symbol, metric_values)
-        rows.append(metrics_row.to_readable_dict())
+        metrics_record = fetcher.fetch_current_metrics(symbol, metric_list)
+        rows.append(metrics_record.to_readable())
     return pd.DataFrame(rows)
 
 def main(argv: Sequence[str] | None = None) -> None:
@@ -94,7 +93,7 @@ def main(argv: Sequence[str] | None = None) -> None:
         prices = _run_price(args.symbols, args.date)
         print(prices.to_string(index=False))
     elif args.command == Command.METRICS:
-        metrics = _run_metrics(args.symbols, args.names)
+        metrics = _run_metrics(args.company_symbols, args.names)
         print(metrics.to_string(index=False))
     else:  # pragma: no cover - guarded by argparse's `required=True`
         parser.error(f"Unknown command: {args.command}")

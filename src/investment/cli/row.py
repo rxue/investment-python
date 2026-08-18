@@ -27,13 +27,3 @@ class PriceRow(NamedTuple):
             "time": _readable_time(self.price.timestamp),
         }
 
-class MetricsRow(NamedTuple):
-    company:str
-    metrics:dict[str,Any]
-
-    def to_readable_dict(self) -> dict[str,Any]:
-        result = {"company":self.company}
-        for metric,value in self.metrics.items():
-            result[metric] = value
-        return result
-
