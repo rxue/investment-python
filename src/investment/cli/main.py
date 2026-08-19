@@ -7,6 +7,7 @@ Usage examples::
     investment-python metrics PRICE,TRAILING_PE --company-symbols AAPL
 """
 import argparse
+import time
 from datetime import date
 from enum import StrEnum
 from typing import Sequence
@@ -94,12 +95,11 @@ def _run_metrics(symbols: str, names: str) -> pd.DataFrame:
             f"investment metrics: error: argument --names: invalid choice: {exc.args[0]!r} "
             f"(choose from {valid_names})"
         ) from None
-    rows = []
-    for symbol in symbols.split(","):
-        symbol = symbol.strip()
-        metrics_record = fetcher.fetch_current_metrics(symbol, metric_list)
-        rows.append(metrics_record.to_readable())
-    return pd.DataFrame(rows)
+    start_time = time.perf_counter()
+    rows = fetcher.fetch_current_metrics_batch([symbol.strip() for symbol in symbols.split(",")], metric_list, False)
+    elapsed = time.perf_counter() - start_time
+    print(f"Fetched metrics for {len(rows)} companies in {elapsed:.0f}s")
+    return pd.DataFrame([r.to_readable() for r in rows])
 
 def main(argv: Sequence[str] | None = None) -> None:
     parser = _build_parser()

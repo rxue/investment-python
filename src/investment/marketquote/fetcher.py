@@ -1,4 +1,5 @@
 from collections.abc import Collection
+from concurrent.futures import ThreadPoolExecutor
 from datetime import date
 from types import MappingProxyType
 from typing import Any
@@ -43,3 +44,16 @@ def fetch_current_metrics(
     if Metric.PRICE in metrics:
         combined_metrics[Metric.PRICE] = fetch_price(company_symbol)
     return MetricsRecord(company_id=company_symbol, metrics=MappingProxyType(combined_metrics))
+
+def fetch_current_metrics_batch(
+        company_ids: Collection[str], metrics: Collection[Metric], in_multi_threads: bool
+) -> list[MetricsRecord]:
+    if in_multi_threads:
+        company_ids = list(company_ids)
+        if not company_ids:
+            return []
+        with ThreadPoolExecutor(max_workers=min(len(company_ids), 10)) as executor:
+            return list(
+                executor.map(lambda company_id: fetch_current_metrics(company_id, metrics), company_ids)
+            )
+    return [fetch_current_metrics(company_id, metrics) for company_id in company_ids]

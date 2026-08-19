@@ -8,6 +8,7 @@ class Metric(Enum):
     DIVIDEND_YIELD = ("dividendYield", "Dividend Yield")
     RETURN_ON_EQUITY = ("returnOnEquity", "Return on Equity")
     REGULAR_MARKET_CHANGE_PERCENT = ("regularMarketChangePercent", "Regular Market Change %")
+    PRICE_TO_BOOK = ("priceToBook", "Price to Book")
 
     def __init__(self, yahoo_metric_name: str | None, label: str) -> None:
         self.yahoo_metric_name = yahoo_metric_name
