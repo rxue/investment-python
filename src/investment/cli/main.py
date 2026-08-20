@@ -21,6 +21,7 @@ from investment.marketquote import repository
 from investment.cli.row import PriceRow
 from investment.util.decorator import clock
 
+logger = logging.getLogger(__name__)
 
 class Command(StrEnum):
     PRICE = "price"
@@ -88,6 +89,8 @@ def _load_company_symbols(csv_source: str) -> str:
     companies = pd.read_csv(csv_source)
     return ",".join(companies["Yahoo Company Symbol"].astype(str))
 
+
+
 @clock
 def _run_metrics(symbols: str, names: str) -> pd.DataFrame:
     metric_names = [name.strip() for name in names.split(",")]
@@ -99,7 +102,17 @@ def _run_metrics(symbols: str, names: str) -> pd.DataFrame:
             f"investment metrics: error: argument --names: invalid choice: {exc.args[0]!r} "
             f"(choose from {valid_names})"
         ) from None
-    rows = repository.fetch_current_metrics_batch([symbol.strip() for symbol in symbols.split(",")], metric_list, False)
+    company_id_list = [symbol.strip() for symbol in symbols.split(",")]
+    batch_size = 100
+    if len(company_id_list) > batch_size:
+        rows = []
+        for i in range(0, len(company_id_list), batch_size):
+            batch = company_id_list[i:i + batch_size]
+            rows.extend(repository.fetch_current_metrics_batch(batch, metric_list, True))
+            logger.info("Executed one batch")
+            time.sleep(60)
+    else:
+        rows = repository.fetch_current_metrics_batch(company_id_list, metric_list, True)
     return pd.DataFrame([r.to_readable() for r in rows])
 
 def main(argv: Sequence[str] | None = None) -> None:
