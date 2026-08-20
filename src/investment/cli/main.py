@@ -19,6 +19,8 @@ import pandas as pd
 from investment.marketquote import repository
 
 from investment.cli.row import PriceRow
+from investment.util.decorator import clock
+
 
 class Command(StrEnum):
     PRICE = "price"
@@ -86,7 +88,7 @@ def _load_company_symbols(csv_source: str) -> str:
     companies = pd.read_csv(csv_source)
     return ",".join(companies["Yahoo Company Symbol"].astype(str))
 
-
+@clock
 def _run_metrics(symbols: str, names: str) -> pd.DataFrame:
     metric_names = [name.strip() for name in names.split(",")]
     try:
@@ -97,10 +99,7 @@ def _run_metrics(symbols: str, names: str) -> pd.DataFrame:
             f"investment metrics: error: argument --names: invalid choice: {exc.args[0]!r} "
             f"(choose from {valid_names})"
         ) from None
-    start_time = time.perf_counter()
-    rows = repository.fetch_current_metrics_batch([symbol.strip() for symbol in symbols.split(",")], metric_list, True)
-    elapsed = time.perf_counter() - start_time
-    print(f"Fetched metrics for {len(rows)} companies in {elapsed:.0f}s")
+    rows = repository.fetch_current_metrics_batch([symbol.strip() for symbol in symbols.split(",")], metric_list, False)
     return pd.DataFrame([r.to_readable() for r in rows])
 
 def main(argv: Sequence[str] | None = None) -> None:
