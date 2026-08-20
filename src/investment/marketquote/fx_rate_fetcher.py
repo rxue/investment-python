@@ -2,11 +2,13 @@ import csv
 import io
 
 import requests
-
+import logging
 from datetime import date
 
 
-def fetch_fx_rate_to_euro(base_currency: str, date: date) -> tuple[date, float]:
+logger = logging.getLogger(__name__)
+
+def fetch_fx_rate_to_euro(base_currency: str, target_date: date) -> tuple[date, float]:
     """Fetch the ``base_currency``-to-EUR exchange rate for ``date`` from the ECB
     (European Central Bank).
 
@@ -20,23 +22,24 @@ def fetch_fx_rate_to_euro(base_currency: str, date: date) -> tuple[date, float]:
     most recent prior business day).
 
     :param base_currency: ISO 4217 currency code to convert from (e.g. ``'USD'``).
-    :param date: the date to fetch the rate for.
+    :param target_date: the date to fetch the rate for.
     :return: a tuple of the actual observation date and the exchange rate.
     :raises requests.HTTPError: if the ECB API request fails.
     :raises StopIteration: if the API response contains no observations.
     """
     if base_currency == 'EUR':
-        return date, 1
+        return target_date, 1
     url = f"https://data-api.ecb.europa.eu/service/data/EXR/D.{base_currency}.EUR.SP00.A"
     today = date.today()
-    if date < today:
-        date_str = date.strftime("%Y-%m-%d")
+    if target_date < today:
+        date_str = target_date.strftime("%Y-%m-%d")
         response = requests.get(url, params={
             "startPeriod": date_str,
             "endPeriod": date_str,
             "format": "csvdata",
         })
     else:
+        logger.info("Fetch FX rate for today")
         response = requests.get(url, params={
             "lastNObservations": 1,
             "format": "csvdata",
@@ -44,4 +47,4 @@ def fetch_fx_rate_to_euro(base_currency: str, date: date) -> tuple[date, float]:
     response.raise_for_status()
     reader = csv.DictReader(io.StringIO(response.text))
     row = next(reader)
-    return date.fromisoformat(row["TIME_PERIOD"]), float(row["OBS_VALUE"])
+    return target_date.fromisoformat(row["TIME_PERIOD"]), float(row["OBS_VALUE"])

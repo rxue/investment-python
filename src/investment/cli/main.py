@@ -7,6 +7,8 @@ Usage examples::
     investment-python metrics PRICE,TRAILING_PE --company-symbols AAPL
 """
 import argparse
+import logging
+import sys
 import time
 from datetime import date
 from enum import StrEnum
@@ -102,6 +104,11 @@ def _run_metrics(symbols: str, names: str) -> pd.DataFrame:
     return pd.DataFrame([r.to_readable() for r in rows])
 
 def main(argv: Sequence[str] | None = None) -> None:
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+        stream=sys.stdout,
+    )
     parser = _build_parser()
     args = parser.parse_args(argv)
 
