@@ -4,6 +4,7 @@ from typing import Any, NamedTuple
 
 class Metric(Enum):
     PRICE = (None, "Price")
+    PRICE_IN_EURO = (None, "Price in EURO")
     TRAILING_PE = ("trailingPE", "Trailing P/E")
     DIVIDEND_YIELD = ("dividendYield", "Dividend Yield")
     RETURN_ON_EQUITY = ("returnOnEquity", "Return on Equity")

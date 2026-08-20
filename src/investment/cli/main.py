@@ -14,7 +14,7 @@ from typing import Sequence
 
 import pandas as pd
 
-from investment.marketquote import fetcher
+from investment.marketquote import repository
 
 from investment.cli.row import PriceRow
 
@@ -45,7 +45,7 @@ def _build_parser() -> argparse.ArgumentParser:
     metrics_parser.add_argument(
         "names",
         help="One or more metrics to fetch, delimited by comma, e.g. PRICE,TRAILING_PE. "
-        f"Choose from {', '.join(metric.name for metric in fetcher.Metric)}.",
+        f"Choose from {', '.join(metric.name for metric in repository.Metric)}.",
     )
     company_source_group = metrics_parser.add_mutually_exclusive_group(required=True)
     company_source_group.add_argument(
@@ -69,7 +69,7 @@ def _run_price(symbols: str, target_date: date | None) -> pd.DataFrame:
     rows = []
     for symbol in symbols.split(","):
         symbol = symbol.strip()
-        price = fetcher.fetch_price(symbol, target_date)
+        price = repository.fetch_price(symbol, target_date)
         price_row=PriceRow(symbol, price)
         rows.append(price_row.to_readable_dict())
     return pd.DataFrame(rows)
@@ -88,15 +88,15 @@ def _load_company_symbols(csv_source: str) -> str:
 def _run_metrics(symbols: str, names: str) -> pd.DataFrame:
     metric_names = [name.strip() for name in names.split(",")]
     try:
-        metric_list = [fetcher.Metric[name] for name in metric_names]
+        metric_list = [repository.Metric[name] for name in metric_names]
     except KeyError as exc:
-        valid_names = ", ".join(metric.name for metric in fetcher.Metric)
+        valid_names = ", ".join(metric.name for metric in repository.Metric)
         raise SystemExit(
             f"investment metrics: error: argument --names: invalid choice: {exc.args[0]!r} "
             f"(choose from {valid_names})"
         ) from None
     start_time = time.perf_counter()
-    rows = fetcher.fetch_current_metrics_batch([symbol.strip() for symbol in symbols.split(",")], metric_list, False)
+    rows = repository.fetch_current_metrics_batch([symbol.strip() for symbol in symbols.split(",")], metric_list, True)
     elapsed = time.perf_counter() - start_time
     print(f"Fetched metrics for {len(rows)} companies in {elapsed:.0f}s")
     return pd.DataFrame([r.to_readable() for r in rows])
