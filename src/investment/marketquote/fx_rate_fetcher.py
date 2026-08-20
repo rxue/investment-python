@@ -4,10 +4,12 @@ import io
 import requests
 import logging
 from datetime import date
+from functools import lru_cache
 
 
 logger = logging.getLogger(__name__)
 
+@lru_cache(maxsize=None)
 def fetch_fx_rate_to_euro(base_currency: str, target_date: date) -> tuple[date, float]:
     """Fetch the ``base_currency``-to-EUR exchange rate for ``date`` from the ECB
     (European Central Bank).
@@ -39,7 +41,7 @@ def fetch_fx_rate_to_euro(base_currency: str, target_date: date) -> tuple[date, 
             "format": "csvdata",
         })
     else:
-        logger.info("Fetch FX rate for today")
+        logger.info(f"Fetch FX rate for {target_date}")
         response = requests.get(url, params={
             "lastNObservations": 1,
             "format": "csvdata",
