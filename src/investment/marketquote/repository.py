@@ -31,6 +31,15 @@ def fetch_fundamental_metrics(
 def fetch_current_metrics(
         company_symbol: str, metrics: Collection[Metric]
 ) -> MetricsRecord:
+    def fetch_price_in_euro(existing_price:Price) -> Price:
+        price = existing_price if existing_price is not None else fetch_price(company_symbol)
+        currency = price.currency_value()
+        if currency == 'EURO':
+            return price
+        else:
+            _, fx_rate = fetch_fx_rate_to_euro(currency, date.today())
+            price_value = round(price.cent_value / fx_rate)
+            return Price(price_value, "EUR", price.timestamp)
     fundamental_metrics_by_yahoo_name = {
         metric.yahoo_metric_name: metric for metric in metrics if metric is not Metric.PRICE
     }
@@ -44,15 +53,6 @@ def fetch_current_metrics(
     }
     if Metric.PRICE in metrics:
         combined_metrics[Metric.PRICE] = fetch_price(company_symbol)
-    def fetch_price_in_euro(existing_price:Price) -> Price:
-        price = existing_price if existing_price is not None else fetch_price(company_symbol)
-        currency = price.currency_value()
-        if currency == 'EURO':
-            return price
-        else:
-            _, fx_rate = fetch_fx_rate_to_euro(currency, date.today())
-            price_value = round(price.cent_value / fx_rate)
-            return Price(price_value, "EUR", price.timestamp)
     if Metric.PRICE_IN_EURO in metrics:
         combined_metrics[Metric.PRICE_IN_EURO] = fetch_price_in_euro(combined_metrics.get(Metric.PRICE))
     return MetricsRecord(company_id=company_symbol, metrics=MappingProxyType(combined_metrics))

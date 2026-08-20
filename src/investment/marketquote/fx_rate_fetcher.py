@@ -4,12 +4,12 @@ import io
 import requests
 import logging
 from datetime import date
-from functools import lru_cache
+from functools import cache
 
 
 logger = logging.getLogger(__name__)
 
-@lru_cache(maxsize=None)
+@cache
 def fetch_fx_rate_to_euro(base_currency: str, target_date: date) -> tuple[date, float]:
     """Fetch the ``base_currency``-to-EUR exchange rate for ``date`` from the ECB
     (European Central Bank).
