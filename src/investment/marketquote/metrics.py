@@ -23,7 +23,9 @@ class MetricsRecord(NamedTuple):
         result = {"company":self.company_id}
         for metric,value in self.metrics.items():
             if metric == Metric.PRICE:
-                result[metric.label] = value.value()
+                result[metric.label] = value.value_with_currency()
+            elif metric == Metric.PRICE_IN_EURO:
+                result[metric.label] = value.amount()
             else:
                 result[metric.label] = value
         return result
