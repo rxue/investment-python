@@ -23,7 +23,7 @@ jobs:
 
       - name: Run watch list
         run: |
-          uv run investment metrics PRICE,PRICE_IN_EURO,TRAILING_PE,RETURN_ON_EQUITY,PRICE_TO_BOOK,DIVIDEND_YIELD --company-csv https://gist.githubusercontent.com/rxue/7ec0914a8af1525d97e8dfd2ac5d61d7/raw/6d2ebe612d46170f452694b6682b29bfe5dadec6/companies.csv > watch_list_output.txt
+          uv run investment metrics PRICE,PRICE_IN_EURO,TRAILING_PE,RETURN_ON_EQUITY,PRICE_TO_BOOK,DIVIDEND_YIELD --company-csv https://gist.githubusercontent.com/rxue/7ec0914a8af1525d97e8dfd2ac5d61d7/raw/6d2ebe612d46170f452694b6682b29bfe5dadec6/companies.csv --output-csv-name watch_list_output.csv > watch_list_output.txt
 
       - name: Send email
         uses: dawidd6/action-send-mail@v3
@@ -34,5 +34,6 @@ jobs:
           password: ${{ secrets.MAIL_PASSWORD }}
           from: ${{ secrets.MAIL_USERNAME }}
           to: ${{ secrets.MAIL_TO }}
-          subject: "Stock Price Watch List - ${{ github.run_id }}"
-          body: file://watch_list_output.txt
+          subject: "Stock Market Quotes Watch List - ${{ github.run_id }}"
+          body: Watch List output in the attachment
+          attachments: watch_list_output.csv
