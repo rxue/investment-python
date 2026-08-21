@@ -17,7 +17,7 @@ from typing import Sequence
 import pandas as pd
 
 from investment.cli.row import PriceRow
-from investment.marketquote import repository, metrics
+from investment.marketquote import metrics, repository
 from investment.util.decorator import clock
 
 logger = logging.getLogger(__name__)
