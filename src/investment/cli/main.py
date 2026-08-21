@@ -68,6 +68,11 @@ def _build_parser() -> argparse.ArgumentParser:
             default=None,
             help="If given, also write the metrics result to this CSV file path.",
         )
+        metrics_parser.add_argument(
+            "--sort-by",
+            default=None,
+            help="Sort results by this metric, ascending. Must be one of the metrics in --names.",
+        )
 
     _build_metrics_parser()
 
@@ -100,7 +105,7 @@ def _load_company_symbols(csv_source: str) -> str:
 
 
 @clock
-def _run_metrics(symbols: str, names: str) -> pd.DataFrame:
+def _run_metrics(symbols: str, names: str, sort_by: str | None = None) -> pd.DataFrame:
     metric_names = [name.strip() for name in names.split(",")]
     try:
         metric_list = [repository.Metric[name] for name in metric_names]
@@ -110,6 +115,23 @@ def _run_metrics(symbols: str, names: str) -> pd.DataFrame:
             f"investment metrics: error: argument --names: invalid choice: {exc.args[0]!r} "
             f"(choose from {valid_names})"
         ) from None
+
+    sort_by_metric = None
+    if sort_by is not None:
+        try:
+            sort_by_metric = repository.Metric[sort_by]
+        except KeyError:
+            valid_names = ", ".join(metric.name for metric in repository.Metric)
+            raise SystemExit(
+                f"investment metrics: error: argument --sort-by: invalid choice: {sort_by!r} "
+                f"(choose from {valid_names})"
+            ) from None
+        if sort_by_metric not in metric_list:
+            raise SystemExit(
+                f"investment metrics: error: argument --sort-by: {sort_by!r} must be one of the "
+                f"metrics in --names ({', '.join(metric_names)})"
+            )
+
     company_id_list = [symbol.strip() for symbol in symbols.split(",")]
     batch_size = 100
     if len(company_id_list) > batch_size:
@@ -121,6 +143,10 @@ def _run_metrics(symbols: str, names: str) -> pd.DataFrame:
             time.sleep(60)
     else:
         rows = repository.fetch_current_metrics_batch(company_id_list, metric_list, True)
+
+    if sort_by_metric is not None:
+        rows = repository.sort_records(rows, sort_by_metric)
+
     return pd.DataFrame([r.to_readable() for r in rows])
 
 def main(argv: Sequence[str] | None = None) -> None:
@@ -137,7 +163,7 @@ def main(argv: Sequence[str] | None = None) -> None:
         print(prices.to_string(index=False))
     elif args.command == Command.METRICS:
         company_symbols = args.company_symbols or _load_company_symbols(args.company_csv)
-        metrics = _run_metrics(company_symbols, args.names)
+        metrics = _run_metrics(company_symbols, args.names, args.sort_by)
         print(metrics.to_string(index=False))
         if args.output_csv_name:
             metrics.to_csv(args.output_csv_name, index=False)

@@ -6,7 +6,7 @@ from typing import Any
 
 from investment.marketquote import yahoo_finance_fetcher
 from investment.marketquote.fx_rate_fetcher import fetch_fx_rate_to_euro
-from investment.marketquote.metrics import Metric, MetricsRecord
+from investment.marketquote.metrics import Metric, MetricsRecord, sort_records
 from investment.vo.value_objects import Price
 
 
@@ -40,6 +40,7 @@ def fetch_current_metrics(
             _, fx_rate = fetch_fx_rate_to_euro(currency, date.today())
             price_value = round(price.cent_value / fx_rate)
             return Price(price_value, "EUR", price.timestamp)
+
     fundamental_metrics_by_yahoo_name = {
         metric.yahoo_metric_name: metric for metric in metrics if metric is not Metric.PRICE
     }

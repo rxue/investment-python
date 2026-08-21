@@ -1,3 +1,4 @@
+import math
 from enum import Enum
 from typing import Any, NamedTuple
 
@@ -30,3 +31,18 @@ class MetricsRecord(NamedTuple):
             else:
                 result[metric.label] = value
         return result
+
+def sort_records(records: list[MetricsRecord], sort_by: Metric) -> list[MetricsRecord]:
+    """Sort ``records`` by their ``sort_by`` metric value, ascending.
+
+    Records missing ``sort_by`` (absent key, ``None``, or ``NaN``) sort last,
+    regardless of the metric's type.
+    """
+    def sort_key(record: MetricsRecord) -> tuple[bool, Any]:
+        value = record.metrics.get(sort_by)
+        if sort_by in (Metric.PRICE, Metric.PRICE_IN_EURO) and value is not None:
+            value = value.amount()
+        is_missing = value is None or (isinstance(value, float) and math.isnan(value))
+        return (is_missing, 0.0 if is_missing else value)
+
+    return sorted(records, key=sort_key)
