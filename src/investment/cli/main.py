@@ -44,24 +44,32 @@ def _build_parser() -> argparse.ArgumentParser:
         "Defaults to the current quoted price.",
     )
 
-    metrics_parser = subparsers.add_parser(
-        Command.METRICS, help="Fetch metrics for symbols."
-    )
-    metrics_parser.add_argument(
-        "names",
-        help="One or more metrics to fetch, delimited by comma, e.g. PRICE,TRAILING_PE. "
-        f"Choose from {', '.join(metric.name for metric in repository.Metric)}.",
-    )
-    company_source_group = metrics_parser.add_mutually_exclusive_group(required=True)
-    company_source_group.add_argument(
-        "--company-symbols",
-        help="Company ticker symbols delimited by comma, e.g. AAPL,ELISA.HE",
-    )
-    company_source_group.add_argument(
-        "--company-csv",
-        help="Path or URL to a company CSV file with a 'Yahoo Company Symbol' column, "
-        "e.g. https://gist.githubusercontent.com/rxue/7ec0914a8af1525d97e8dfd2ac5d61d7/raw/companies.csv",
-    )
+    def _build_metrics_parser() -> None:
+        metrics_parser = subparsers.add_parser(
+            Command.METRICS, help="Fetch metrics for symbols."
+        )
+        metrics_parser.add_argument(
+            "names",
+            help="One or more metrics to fetch, delimited by comma, e.g. PRICE,TRAILING_PE. "
+            f"Choose from {', '.join(metric.name for metric in repository.Metric)}.",
+        )
+        company_source_group = metrics_parser.add_mutually_exclusive_group(required=True)
+        company_source_group.add_argument(
+            "--company-symbols",
+            help="Company ticker symbols delimited by comma, e.g. AAPL,ELISA.HE",
+        )
+        company_source_group.add_argument(
+            "--company-csv",
+            help="Path or URL to a company CSV file with a 'Yahoo Company Symbol' column, "
+            "e.g. https://gist.githubusercontent.com/rxue/7ec0914a8af1525d97e8dfd2ac5d61d7/raw/companies.csv",
+        )
+        metrics_parser.add_argument(
+            "--output-csv-name",
+            default=None,
+            help="If given, also write the metrics result to this CSV file path.",
+        )
+
+    _build_metrics_parser()
 
     return parser
 
@@ -131,6 +139,8 @@ def main(argv: Sequence[str] | None = None) -> None:
         company_symbols = args.company_symbols or _load_company_symbols(args.company_csv)
         metrics = _run_metrics(company_symbols, args.names)
         print(metrics.to_string(index=False))
+        if args.output_csv_name:
+            metrics.to_csv(args.output_csv_name, index=False)
     else:  # pragma: no cover - guarded by argparse's `required=True`
         parser.error(f"Unknown command: {args.command}")
 
