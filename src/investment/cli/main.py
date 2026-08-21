@@ -17,7 +17,7 @@ from typing import Sequence
 import pandas as pd
 
 from investment.cli.row import PriceRow
-from investment.marketquote import repository
+from investment.marketquote import repository, metrics
 from investment.util.decorator import clock
 
 logger = logging.getLogger(__name__)
@@ -146,7 +146,7 @@ def _run_metrics(symbols: str, names: str, sort_by: str | None = None) -> pd.Dat
         rows = repository.fetch_current_metrics_batch(company_id_list, metric_list, True)
 
     if sort_by_metric is not None:
-        rows = repository.sort_records(rows, sort_by_metric)
+        rows = metrics.sort_records(rows, sort_by_metric)
 
     return pd.DataFrame([r.to_readable() for r in rows])
 
