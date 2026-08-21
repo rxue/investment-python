@@ -22,3 +22,21 @@ build-backend = "uv_build"
 
 [tool.uv.build-backend]
 module-name = "investment"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+    "ruff>=0.16.4",
+]
+
+[tool.pytest.ini_options]
+markers = [
+    "integration: hits live external APIs (Yahoo Finance, ECB); slower and network-dependent.",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]

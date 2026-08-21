@@ -7,7 +7,7 @@ class Price(NamedTuple):
     currency: str
     timestamp: datetime
     def amount(self) -> float:
-        return f"{self.cent_value / 100}"
+        return self.cent_value / 100
     def value_with_currency(self) -> str:
         return f"{self.amount()} {self.currency}"
     def currency_value(self) -> str:

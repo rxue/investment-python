@@ -1,11 +1,10 @@
 import csv
 import io
-
-import requests
 import logging
 from datetime import date
 from functools import cache
 
+import requests
 
 logger = logging.getLogger(__name__)
 

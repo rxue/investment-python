@@ -1,4 +1,4 @@
-from typing import NamedTuple, Any
+from typing import Any, NamedTuple
 
 from investment.vo.value_objects import Price
 

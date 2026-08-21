@@ -16,9 +16,8 @@ from typing import Sequence
 
 import pandas as pd
 
-from investment.marketquote import repository
-
 from investment.cli.row import PriceRow
+from investment.marketquote import repository
 from investment.util.decorator import clock
 
 logger = logging.getLogger(__name__)
@@ -35,7 +34,9 @@ def _build_parser() -> argparse.ArgumentParser:
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     price_parser = subparsers.add_parser(Command.PRICE, help="Fetch the price for a symbol.")
-    price_parser.add_argument("symbols", help="Company ticker symbols delimited by comma, e.g. AAPL,ELISA.HE")
+    price_parser.add_argument(
+        "symbols", help="Company ticker symbols delimited by comma, e.g. AAPL,ELISA.HE"
+    )
     price_parser.add_argument(
         "--date",
         type=date.fromisoformat,
