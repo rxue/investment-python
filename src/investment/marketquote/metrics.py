@@ -3,6 +3,7 @@ from typing import Any, NamedTuple
 
 
 class Metric(Enum):
+    COMPANY_NAME = ("shortName", "Company Name")
     PRICE = (None, "Price")
     PRICE_IN_EURO = (None, "Price in EURO")
     TRAILING_PE = ("trailingPE", "Trailing P/E")
