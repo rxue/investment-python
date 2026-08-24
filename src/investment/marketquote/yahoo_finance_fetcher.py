@@ -40,7 +40,9 @@ def fetch_current_price(symbol: str) -> tuple[float, str, int]:
     return price, currency, regular_market_time
 
 
-def fetcher_close_price(symbol: str, target_date: date) -> tuple[numpy.float64, str, pandas.Timestamp]:
+def fetcher_close_price(
+    symbol: str, target_date: date
+) -> tuple[numpy.float64, str, pandas.Timestamp]:
     """Fetch the closing price for ``symbol`` on or before ``target_date``.
 
     Returns a ``(price, currency, timestamp)`` tuple: ``price`` is the

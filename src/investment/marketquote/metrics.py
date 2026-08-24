@@ -8,8 +8,8 @@ class Metric(Enum):
     PRICE = (None, "Price")
     PRICE_IN_EURO = (None, "Price in EURO")
     TRAILING_PE = ("trailingPE", "Trailing P/E")
-    DIVIDEND_YIELD = ("dividendYield", "Dividend Yield")
-    RETURN_ON_EQUITY = ("returnOnEquity", "Return on Equity")
+    DIVIDEND_YIELD = ("dividendYield", "Dividend Yield %")
+    RETURN_ON_EQUITY = ("returnOnEquity", "Return on Equity %")
     REGULAR_MARKET_CHANGE_PERCENT = ("regularMarketChangePercent", "Regular Market Change %")
     PRICE_TO_BOOK = ("priceToBook", "Price to Book")
 
@@ -28,6 +28,8 @@ class MetricsRecord(NamedTuple):
                 result[metric.label] = value.value_with_currency()
             elif metric == Metric.PRICE_IN_EURO:
                 result[metric.label] = value.amount()
+            elif metric.label.endswith("%") and value is not None:
+                result[metric.label] = value.percent_value()
             else:
                 result[metric.label] = value
         return result

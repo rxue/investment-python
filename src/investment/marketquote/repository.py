@@ -8,7 +8,7 @@ from typing import Any
 from investment.marketquote import yahoo_finance_fetcher
 from investment.marketquote.fx_rate_fetcher import fetch_fx_rate_to_euro
 from investment.marketquote.metrics import Metric, MetricsRecord
-from investment.vo.value_objects import Price
+from investment.vo.value_objects import Percentage, Price
 
 
 def fetch_price(symbol: str, target_date: date | None = None) -> Price:
@@ -54,18 +54,27 @@ def fetch_fundamental_metrics(
 def fetch_current_metrics(
         company_id: str, metrics: Collection[Metric]
 ) -> MetricsRecord:
-
-    fundamental_metrics_by_yahoo_name = {
-        metric.yahoo_metric_name: metric for metric in metrics if metric is not Metric.PRICE
-    }
-    fundamental_metrics_values = yahoo_finance_fetcher.fetch_fundamental_metrics(
-        company_id, fundamental_metrics_by_yahoo_name.keys()
-    )
-
-    combined_metrics: dict[Metric, Any] = {
-        fundamental_metrics_by_yahoo_name[yahoo_metric_name]: value
-        for yahoo_metric_name, value in fundamental_metrics_values.items()
-    }
+    def fetch_fundamental_metrics() -> dict[Metric,Any]:
+        fundamental_metrics_by_yahoo_name = {
+            metric.yahoo_metric_name: metric for metric in metrics if metric is not Metric.PRICE
+        }
+        fundamental_metrics_values = yahoo_finance_fetcher.fetch_fundamental_metrics(
+            company_id, fundamental_metrics_by_yahoo_name.keys()
+        )
+        fundamenal_metrics: dict[Metric, Any] = {
+            fundamental_metrics_by_yahoo_name[yahoo_metric_name]: value
+            for yahoo_metric_name, value in fundamental_metrics_values.items()
+        }
+        for metric in metrics:
+            if metric is Metric.RETURN_ON_EQUITY:
+                fraction_value = fundamenal_metrics[metric]
+                fundamenal_metrics[Metric.RETURN_ON_EQUITY] = Percentage(fraction_value)
+            elif metric.label.endswith("%"):
+                percent_value = fundamenal_metrics[metric]
+                if percent_value is not None:
+                    fundamenal_metrics[metric] = Percentage(percent_value / 100)
+        return fundamenal_metrics
+    combined_metrics = fetch_fundamental_metrics()
     if Metric.PRICE in metrics:
         combined_metrics[Metric.PRICE] = fetch_price(company_id)
     if Metric.PRICE_IN_EURO in metrics:
