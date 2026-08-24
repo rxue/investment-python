@@ -2,50 +2,51 @@
 
 This mirrors the Java `YahooFinanceFetcher`, but delegates all the HTTP
 plumbing (cookies, crumbs, endpoint URLs) to ``yfinance`` instead of talking
-to the Yahoo Finance REST API directly. Price lookups return the ``Price``
-value object; ``fetch_fundamental_metrics`` still returns a plain ``dict``
-keyed by metric name, since those metric values can be of any type.
+to the Yahoo Finance REST API directly. Price lookups return raw
+``(price, currency, timestamp)`` tuples, leaving ``Price`` value-object
+construction (e.g. cent-value conversion) to the caller;
+``fetch_fundamental_metrics`` returns a plain ``dict`` keyed by metric name,
+since those metric values can be of any type.
 """
 from collections.abc import Collection
-from datetime import date, datetime, timedelta
-from decimal import ROUND_HALF_UP, Decimal
+from datetime import date, timedelta
 from typing import Any
-from zoneinfo import ZoneInfo
 
+import numpy
+import pandas
 import yfinance as yf
-
-from investment.vo.value_objects import Price
 
 REGULAR_MARKET_CHANGE_PERCENT = "regularMarketChangePercent"
 
 
-def _to_cent_value(price: Any) -> int:
-    """Convert a fractional price (e.g. ``189.98``) to whole cents."""
-    return int((Decimal(str(price)) * 100).to_integral_value(rounding=ROUND_HALF_UP))
+def fetch_current_price(symbol: str) -> tuple[float, str, int]:
+    """Fetch the latest quoted price for ``symbol``.
 
-
-def fetch_current_price(symbol: str) -> Price:
-    """Fetch the latest quoted price for ``symbol``."""
+    Returns a ``(price, currency, timestamp)`` tuple: ``price`` is the
+    fetched price as returned by ``yfinance`` (a ``float``), ``currency``
+    is the quote currency, and ``timestamp`` is the quote time as Unix
+    epoch seconds.
+    """
     info = yf.Ticker(symbol).info
     price = info.get("regularMarketPrice")
     if price is None:
         raise ValueError(f"Cannot fetch any price with the given company symbol {symbol}")
 
+    currency = info.get("currency")
     regular_market_time = info.get("regularMarketTime")
-    exchange_timezone_name = info.get("exchangeTimezoneName")
-    if regular_market_time is None or exchange_timezone_name is None:
+    if regular_market_time is None:
         raise ValueError(f"Cannot determine the price timestamp for company symbol {symbol}")
-    timestamp = datetime.fromtimestamp(regular_market_time, tz=ZoneInfo(exchange_timezone_name))
 
-    return Price(
-        cent_value=_to_cent_value(price),
-        currency=info.get("currency"),
-        timestamp=timestamp,
-    )
+    return price, currency, regular_market_time
 
 
-def fetcher_close_price(symbol: str, target_date: date) -> Price:
-    """Fetch the closing price for ``symbol`` on or before ``target_date``."""
+def fetcher_close_price(symbol: str, target_date: date) -> tuple[numpy.float64, str, pandas.Timestamp]:
+    """Fetch the closing price for ``symbol`` on or before ``target_date``.
+
+    Returns a ``(price, currency, timestamp)`` tuple: ``price`` is the
+    closing price as returned by ``yfinance``, ``currency`` is the quote
+    currency, and ``timestamp`` is the close date/time.
+    """
     ticker = yf.Ticker(symbol)
     history = ticker.history(
         start=target_date - timedelta(days=7),
@@ -59,13 +60,9 @@ def fetcher_close_price(symbol: str, target_date: date) -> Price:
         )
 
     last_close = history["Close"].iloc[-1]
-    timestamp = history.index[-1].to_pydatetime()
+    timestamp = history.index[-1]
 
-    return Price(
-        cent_value=_to_cent_value(last_close),
-        currency=ticker.info.get("currency"),
-        timestamp=timestamp,
-    )
+    return last_close, ticker.info.get("currency"), timestamp
 
 
 def fetch_fundamental_metrics(symbol: str, metrics: Collection[str]) -> dict[str, Any]:

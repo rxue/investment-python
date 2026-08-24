@@ -1,6 +1,7 @@
 from collections.abc import Collection
 from concurrent.futures import ThreadPoolExecutor
-from datetime import date
+from datetime import date, datetime, timezone
+from decimal import ROUND_HALF_UP, Decimal
 from types import MappingProxyType
 from typing import Any
 
@@ -17,8 +18,20 @@ def fetch_price(symbol: str, target_date: date | None = None) -> Price:
     otherwise the closing price on or before ``target_date``.
     """
     if target_date is None:
-        return yahoo_finance_fetcher.fetch_current_price(symbol)
-    return yahoo_finance_fetcher.fetcher_close_price(symbol, target_date)
+        price, currency, epoch_seconds = yahoo_finance_fetcher.fetch_current_price(symbol)
+        cent_value = int((Decimal(str(price)) * 100).to_integral_value(rounding=ROUND_HALF_UP))
+        return Price(
+            cent_value=cent_value,
+            currency=currency,
+            timestamp=datetime.fromtimestamp(epoch_seconds, tz=timezone.utc),
+        )
+    last_close, currency, timestamp = yahoo_finance_fetcher.fetcher_close_price(symbol, target_date)
+    cent_value = int((Decimal(str(last_close)) * 100).to_integral_value(rounding=ROUND_HALF_UP))
+    return Price(
+        cent_value=cent_value,
+        currency=currency,
+        timestamp=timestamp,
+    )
 
 def fetch_price_in_euro(
     company_id: str, target_date: date | None = None, existing_price: Price | None = None
