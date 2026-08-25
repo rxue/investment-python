@@ -53,7 +53,8 @@ def fetch_current_metrics(
         fundamental_metrics_by_yahoo_name = {
             metric.yahoo_metric_name: metric
             for metric in metrics
-            if metric not in [Metric.PRICE,Metric.PRICE_IN_EURO] and metric.yahoo_metric_name is not None
+            if metric not in [Metric.PRICE, Metric.PRICE_IN_EURO]
+            and metric.yahoo_metric_name is not None
         }
         fundamental_metrics_values = yahoo_finance_fetcher.fetch_fundamental_metrics(
             company_id, fundamental_metrics_by_yahoo_name.keys()

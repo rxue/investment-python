@@ -35,7 +35,9 @@ def fetch_current_price(symbol: str) -> tuple[float, str, int]:
     currency:str|None = info.get("currency")
     regular_market_time = info.get("regularMarketTime")
     if currency is None or regular_market_time is None:
-        raise ValueError(f"Cannot determine the price currency or the timestamp for company symbol {symbol}")
+        raise ValueError(
+            f"Cannot determine the price currency or the timestamp for company symbol {symbol}"
+        )
 
     return price, currency, regular_market_time
 
