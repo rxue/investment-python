@@ -1,8 +1,10 @@
+import logging
 import math
 from collections.abc import Mapping
 from enum import Enum
 from typing import Any, NamedTuple
 
+logger = logging.getLogger(__name__)
 
 class Metric(Enum):
     COMPANY_NAME = ("shortName", "Company Name")
@@ -24,12 +26,14 @@ class MetricsRecord(NamedTuple):
     metrics: Mapping[Metric, Any]
     def to_readable(self) -> dict[str,Any]:
         result:dict[str,Any] = {"company":self.company_id}
+        logger.info(f"Company: {self.company_id}")
         for metric,value in self.metrics.items():
             if metric == Metric.PRICE:
                 result[metric.label] = value.value_with_currency()
             elif metric == Metric.PRICE_IN_EURO:
                 result[metric.label] = value.amount()
             elif metric.label.endswith("%") and value is not None:
+                logger.info(f"Metric, {metric}, with percent or fraction value: {value}")
                 result[metric.label] = value.percent_value()
             else:
                 result[metric.label] = value

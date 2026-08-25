@@ -153,7 +153,7 @@ def _run_metrics(symbols: str, names: str, sort_by: str | None = None) -> pd.Dat
 def main(argv: Sequence[str] | None = None) -> None:
     logging.basicConfig(
         level=logging.INFO,
-        format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+        format="%(asctime)s %(levelname)s %(name)s.%(funcName)s: %(message)s",
         stream=sys.stdout,
     )
     parser = _build_parser()
