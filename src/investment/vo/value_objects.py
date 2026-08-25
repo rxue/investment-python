@@ -16,5 +16,5 @@ class Price(NamedTuple):
 class Percentage(NamedTuple):
     fraction_value:float
     def percent_value(self) -> float:
-        return self.fraction_value * 100
+        return round(self.fraction_value * 100, 2)
 
