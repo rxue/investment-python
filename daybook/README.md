@@ -15,12 +15,15 @@ multiple steps of the developer continuing the existing project:
 ##### [`pyproject.toml`](https://www.youtube.com/watch?v=AMdG7IjgSPM&t=506s)
 * [`uv add`](https://www.youtube.com/watch?v=AMdG7IjgSPM&t=544s)
 `uv add` automatically create *virtual environment* with `venv`
-
+## `Mypy`
+### Tutorial: https://www.youtube.com/watch?v=Y9fT4HVdCuQ
 ## Fluent Python
 ### Part II Functions as Objects
 #### Chapter 9: Decorators and Closures
 ##### Decorators in the Standard Library
 ###### Memoization with `functools.cache`
+## IDE: PyCharm
+EAP - *Early Access Program*
 
 # DevOps
 ## `cron` in Linux
