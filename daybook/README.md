@@ -28,4 +28,5 @@ EAP - *Early Access Program*
 # DevOps
 ## `cron` in Linux
 revision: the `*` marked in the hour/min/day etc. means every. For instance, `cron: "0 22 * * 1-5"`, where the first `*` is every day of month, the second `*` is every month. When changing the first `0` to `*`, i.e. the whole cron script to `cron: "* 22 * * 1-5"`, the first star makes the scheduled program executed every minute
-
+## Github CLI - `gh`
+### `gh workflow run price_tracker.yml` to trigger the event
