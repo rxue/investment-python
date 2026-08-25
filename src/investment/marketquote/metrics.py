@@ -22,7 +22,7 @@ class MetricsRecord(NamedTuple):
     company_id: str
     metrics: dict[Metric, Any]
     def to_readable(self) -> dict[str,Any]:
-        result = {"company":self.company_id}
+        result:dict[str,Any] = {"company":self.company_id}
         for metric,value in self.metrics.items():
             if metric == Metric.PRICE:
                 result[metric.label] = value.value_with_currency()

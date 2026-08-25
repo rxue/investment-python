@@ -25,6 +25,8 @@ module-name = "investment"
 
 [dependency-groups]
 dev = [
+    "pandas-stubs>=3.0.5.260730",
+    "pyright>=1.1.411",
     "pytest>=9.1.1",
     "ruff>=0.16.4",
 ]
@@ -40,3 +42,9 @@ target-version = "py313"
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I"]
+
+[tool.pyright]
+pythonVersion = "3.13"
+include = ["src"]
+reportUnnecessaryTypeIgnoreComment = true
+reportUnnecessaryCast = true
