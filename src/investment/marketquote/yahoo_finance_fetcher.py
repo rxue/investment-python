@@ -32,10 +32,10 @@ def fetch_current_price(symbol: str) -> tuple[float, str, int]:
     if price is None:
         raise ValueError(f"Cannot fetch any price with the given company symbol {symbol}")
 
-    currency = info.get("currency")
+    currency:str|None = info.get("currency")
     regular_market_time = info.get("regularMarketTime")
-    if regular_market_time is None:
-        raise ValueError(f"Cannot determine the price timestamp for company symbol {symbol}")
+    if currency is None or regular_market_time is None:
+        raise ValueError(f"Cannot determine the price currency or the timestamp for company symbol {symbol}")
 
     return price, currency, regular_market_time
 
@@ -55,7 +55,7 @@ def fetcher_close_price(
         end=target_date + timedelta(days=1),
         interval="1d",
     )
-    history = history[history.index.date <= target_date]
+    history = history[pandas.DatetimeIndex(history.index).date <= target_date]
     if history.empty:
         raise ValueError(
             f"No historical price found for company symbol {symbol} on or before {target_date}"
@@ -64,7 +64,11 @@ def fetcher_close_price(
     last_close = history["Close"].iloc[-1]
     timestamp = history.index[-1]
 
-    return last_close, ticker.info.get("currency"), timestamp
+    currency = ticker.info.get("currency")
+    if currency is None:
+        raise ValueError(f"Cannot determine the price currency for company symbol {symbol}")
+
+    return last_close, currency, timestamp
 
 
 def fetch_fundamental_metrics(symbol: str, metrics: Collection[str]) -> dict[str, Any]:

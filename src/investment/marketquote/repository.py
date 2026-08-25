@@ -45,18 +45,15 @@ def fetch_price_in_euro(
         price_value = round(price.cent_value / fx_rate)
         return Price(price_value, "EUR", price.timestamp)
 
-def fetch_fundamental_metrics(
-    company_symbol: str, metrics: Collection[Metric]
-) -> dict[str, Any]:
-    return yahoo_finance_fetcher.fetch_fundamental_metrics(company_symbol, metrics)
-
 
 def fetch_current_metrics(
         company_id: str, metrics: Collection[Metric]
 ) -> MetricsRecord:
     def fetch_fundamental_metrics() -> dict[Metric,Any]:
         fundamental_metrics_by_yahoo_name = {
-            metric.yahoo_metric_name: metric for metric in metrics if metric is not Metric.PRICE
+            metric.yahoo_metric_name: metric
+            for metric in metrics
+            if metric not in [Metric.PRICE,Metric.PRICE_IN_EURO] and metric.yahoo_metric_name is not None
         }
         fundamental_metrics_values = yahoo_finance_fetcher.fetch_fundamental_metrics(
             company_id, fundamental_metrics_by_yahoo_name.keys()
@@ -74,7 +71,7 @@ def fetch_current_metrics(
                 if percent_value is not None:
                     fundamenal_metrics[metric] = Percentage(percent_value / 100)
         return fundamenal_metrics
-    combined_metrics = fetch_fundamental_metrics()
+    combined_metrics: dict[Metric,Any] = fetch_fundamental_metrics()
     if Metric.PRICE in metrics:
         combined_metrics[Metric.PRICE] = fetch_price(company_id)
     if Metric.PRICE_IN_EURO in metrics:

@@ -1,4 +1,5 @@
 import math
+from collections.abc import Mapping
 from enum import Enum
 from typing import Any, NamedTuple
 
@@ -20,7 +21,7 @@ class Metric(Enum):
 
 class MetricsRecord(NamedTuple):
     company_id: str
-    metrics: dict[Metric, Any]
+    metrics: Mapping[Metric, Any]
     def to_readable(self) -> dict[str,Any]:
         result:dict[str,Any] = {"company":self.company_id}
         for metric,value in self.metrics.items():
