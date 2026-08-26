@@ -29,6 +29,15 @@ class MetricsRecord(NamedTuple):
     def has_errors(self) -> bool:
         return any(isinstance(value, Exception) for value in self.metrics.values())
     def to_readable(self) -> dict[str,Any]:
+        if self.has_errors():
+            errors = {
+                metric.label: str(value)
+                for metric, value in self.metrics.items()
+                if isinstance(value, Exception)
+            }
+            raise ValueError(
+                f"Cannot make metrics for {self.company_id} readable due to error(s): {errors}"
+            )
         result:dict[str,Any] = {"company":self.company_id}
         logger.info(f"Company: {self.company_id}")
         for metric,value in self.metrics.items():
