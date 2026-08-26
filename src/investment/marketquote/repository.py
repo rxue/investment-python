@@ -75,11 +75,20 @@ def fetch_current_metrics(
         return fundamenal_metrics
     combined_metrics: dict[Metric,Any] = fetch_fundamental_metrics()
     if Metric.PRICE in metrics:
-        combined_metrics[Metric.PRICE] = fetch_price(company_id)
+        try:
+            combined_metrics[Metric.PRICE] = fetch_price(company_id)
+        except Exception as e:
+            combined_metrics[Metric.PRICE] = e
     if Metric.PRICE_IN_EURO in metrics:
-        combined_metrics[Metric.PRICE_IN_EURO] = fetch_price_in_euro(
-            company_id=company_id, existing_price=combined_metrics.get(Metric.PRICE)
-        )
+        existing_price = combined_metrics.get(Metric.PRICE)
+        if not isinstance(existing_price, Price):
+            existing_price = None
+        try:
+            combined_metrics[Metric.PRICE_IN_EURO] = fetch_price_in_euro(
+                company_id=company_id, existing_price=existing_price
+            )
+        except Exception as e:
+            combined_metrics[Metric.PRICE_IN_EURO] = e
     return MetricsRecord(company_id=company_id, metrics=MappingProxyType(combined_metrics))
 
 def fetch_current_metrics_batch(

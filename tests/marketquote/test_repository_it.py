@@ -1,4 +1,5 @@
-"""Integration tests for ``repository.fetch_price_in_euro``.
+"""Integration tests for ``repository.fetch_price_in_euro`` and
+``repository.fetch_current_metrics``.
 
 These hit the real Yahoo Finance and ECB APIs over the network (no
 mocking) - hence "IT" rather than a unit test.
@@ -7,7 +8,12 @@ from datetime import date
 
 import pytest
 
-from investment.marketquote.repository import fetch_price, fetch_price_in_euro
+from investment.marketquote.metrics import Metric
+from investment.marketquote.repository import (
+    fetch_current_metrics,
+    fetch_price,
+    fetch_price_in_euro,
+)
 
 pytestmark = pytest.mark.integration
 
@@ -31,3 +37,12 @@ def test_fetch_price_in_euro_passthrough_for_eur_symbol():
     assert price_in_euro.currency_value() == "EUR"
     assert price_in_euro.amount() == price.amount()
     assert (date.today() - price_in_euro.timestamp.date()).days <= 3
+
+
+def test_fetch_current_metrics_when_company_does_not_exist_thus_has_no_price():
+    """A symbol that doesn't exist on Yahoo Finance has no quoted price to
+    return, so fetching ``Metric.PRICE`` for it should raise, not silently
+    produce a record with a missing price.
+    """
+    metric_record = fetch_current_metrics("NOTHING", [Metric.PRICE,Metric.PRICE_IN_EURO])
+    assert metric_record.has_errors() is True
