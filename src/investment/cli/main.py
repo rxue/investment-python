@@ -177,7 +177,7 @@ def main(argv: Sequence[str] | None = None) -> None:
         metrics,erratic_company_ids = _run_metrics(company_symbols, args.names, args.sort_by)
         print(metrics.to_string(index=False))
         print("Companies fetched with error")
-        print(metrics.to_string(index=False))
+        print(erratic_company_ids.to_string(index=False))
         if args.output_csv_name:
             metrics.to_csv(args.output_csv_name, index=False)
             metrics.to_csv("companies_with_error", index=False)
