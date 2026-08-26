@@ -25,7 +25,8 @@ def test_has_errors_false():
     assert record.has_errors() is False
 
 def test_to_readable_when_there_is_error():
-    """In case there is error in the MetricRecord, to_readable should throw ValueError with explict explanation message
+    """In case there is error in the MetricRecord, to_readable should throw
+    ValueError with explicit explanation message.
     """
     record = MetricsRecord(
         company_id="AAPL", metrics={Metric.PRICE: ValueError("could not fetch price")}
