@@ -106,7 +106,9 @@ def _load_company_symbols(csv_source: str) -> str:
 
 
 @clock
-def _run_metrics(symbols: str, names: str, sort_by: str | None = None) -> pd.DataFrame:
+def _run_metrics(
+    symbols: str, names: str, sort_by: str | None = None
+) -> tuple[pd.DataFrame, pd.DataFrame]:
     metric_names = [name.strip() for name in names.split(",")]
     try:
         metric_list = [repository.Metric[name] for name in metric_names]
@@ -138,18 +140,25 @@ def _run_metrics(symbols: str, names: str, sort_by: str | None = None) -> pd.Dat
     thread_amount = 10
     if len(company_id_list) > batch_size:
         rows = []
+        erratic_rows = []
         for i in range(0, len(company_id_list), batch_size):
             batch = company_id_list[i:i + batch_size]
-            rows.extend(repository.fetch_current_metrics_batch(batch, metric_list, thread_amount))
+            metrics_records, erratic_metrics_records = repository.fetch_current_metrics_batch(
+                batch, metric_list, thread_amount
+            )
+            rows.extend(metrics_records)
+            erratic_metrics_records.extend(erratic_metrics_records)
             logger.info("Executed one batch")
             time.sleep(60)
     else:
-        rows = repository.fetch_current_metrics_batch(company_id_list, metric_list, thread_amount)
+        rows, erratic_rows = repository.fetch_current_metrics_batch(
+            company_id_list, metric_list, thread_amount
+        )
 
     if sort_by_metric is not None:
         rows = metrics.sort_records(rows, sort_by_metric)
 
-    return pd.DataFrame([r.to_readable() for r in rows])
+    return pd.DataFrame([r.to_readable() for r in rows]), pd.DataFrame([r.company_id for r in rows])
 
 def main(argv: Sequence[str] | None = None) -> None:
     logging.basicConfig(
@@ -165,10 +174,13 @@ def main(argv: Sequence[str] | None = None) -> None:
         print(prices.to_string(index=False))
     elif args.command == Command.METRICS:
         company_symbols = args.company_symbols or _load_company_symbols(args.company_csv)
-        metrics = _run_metrics(company_symbols, args.names, args.sort_by)
+        metrics,erratic_company_ids = _run_metrics(company_symbols, args.names, args.sort_by)
+        print(metrics.to_string(index=False))
+        print("Companies fetched with error")
         print(metrics.to_string(index=False))
         if args.output_csv_name:
             metrics.to_csv(args.output_csv_name, index=False)
+            metrics.to_csv("companies_with_error", index=False)
     else:  # pragma: no cover - guarded by argparse's `required=True`
         parser.error(f"Unknown command: {args.command}")
 

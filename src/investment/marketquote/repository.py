@@ -93,15 +93,25 @@ def fetch_current_metrics(
 
 def fetch_current_metrics_batch(
         company_ids: Collection[str], metrics: Collection[Metric], thread_amount: int | None
-) -> list[MetricsRecord]:
+) -> tuple[list[MetricsRecord], list[MetricsRecord]]:
+    """Fetch metrics for ``company_ids``, split into records without errors and
+    records with errors.
+
+    Returns a ``(records_without_errors, records_with_errors)`` tuple.
+    """
     if thread_amount is not None:
         company_ids = list(company_ids)
         if not company_ids:
-            return []
+            return [], []
         with ThreadPoolExecutor(max_workers=min(len(company_ids), thread_amount)) as executor:
-            return list(
+            records = list(
                 executor.map(
                     lambda company_id: fetch_current_metrics(company_id, metrics), company_ids
                 )
             )
-    return [fetch_current_metrics(company_id, metrics) for company_id in company_ids]
+    else:
+        records = [fetch_current_metrics(company_id, metrics) for company_id in company_ids]
+
+    records_without_errors = [record for record in records if not record.has_errors()]
+    records_with_errors = [record for record in records if record.has_errors()]
+    return records_without_errors, records_with_errors
