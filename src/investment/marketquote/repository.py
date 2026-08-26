@@ -64,10 +64,10 @@ def fetch_current_metrics(
             for yahoo_metric_name, value in fundamental_metrics_values.items()
         }
         for metric in metrics:
-            if metric is Metric.RETURN_ON_EQUITY:
+            if metric in (Metric.RETURN_ON_EQUITY, Metric.DIVIDEND_PAYOUT_RATIO):
                 fraction_value = fundamenal_metrics[metric]
                 if fraction_value is not None:
-                    fundamenal_metrics[Metric.RETURN_ON_EQUITY] = Percentage(fraction_value)
+                    fundamenal_metrics[metric] = Percentage(fraction_value)
             elif metric.label.endswith("%"):
                 percent_value = fundamenal_metrics[metric]
                 if percent_value is not None:
