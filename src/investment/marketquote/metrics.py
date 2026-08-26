@@ -35,6 +35,12 @@ class MetricsRecord(NamedTuple):
             elif metric.label.endswith("%") and value is not None:
                 logger.info(f"Metric, {metric}, with percent or fraction value: {value}")
                 result[metric.label] = value.percent_value()
+            elif metric == Metric.TRAILING_PE:
+                if value is not None:
+                    result[metric.label] = int(value*10)/10
+            elif metric == Metric.PRICE_TO_BOOK:
+                if value is not None:
+                    result[metric.label] = int(value*100)/100
             else:
                 result[metric.label] = value
         return result
