@@ -26,6 +26,8 @@ class Metric(Enum):
 class MetricsRecord(NamedTuple):
     company_id: str
     metrics: Mapping[Metric, Any]
+    def has_errors(self) -> bool:
+        return any(isinstance(value, Exception) for value in self.metrics.values())
     def to_readable(self) -> dict[str,Any]:
         result:dict[str,Any] = {"company":self.company_id}
         logger.info(f"Company: {self.company_id}")

@@ -83,13 +83,13 @@ def fetch_current_metrics(
     return MetricsRecord(company_id=company_id, metrics=MappingProxyType(combined_metrics))
 
 def fetch_current_metrics_batch(
-        company_ids: Collection[str], metrics: Collection[Metric], in_multi_threads: bool
+        company_ids: Collection[str], metrics: Collection[Metric], thread_amount: int | None
 ) -> list[MetricsRecord]:
-    if in_multi_threads:
+    if thread_amount is not None:
         company_ids = list(company_ids)
         if not company_ids:
             return []
-        with ThreadPoolExecutor(max_workers=min(len(company_ids), 10)) as executor:
+        with ThreadPoolExecutor(max_workers=min(len(company_ids), thread_amount)) as executor:
             return list(
                 executor.map(
                     lambda company_id: fetch_current_metrics(company_id, metrics), company_ids

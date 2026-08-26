@@ -135,15 +135,16 @@ def _run_metrics(symbols: str, names: str, sort_by: str | None = None) -> pd.Dat
 
     company_id_list = [symbol.strip() for symbol in symbols.split(",")]
     batch_size = 100
+    thread_amount = 10
     if len(company_id_list) > batch_size:
         rows = []
         for i in range(0, len(company_id_list), batch_size):
             batch = company_id_list[i:i + batch_size]
-            rows.extend(repository.fetch_current_metrics_batch(batch, metric_list, True))
+            rows.extend(repository.fetch_current_metrics_batch(batch, metric_list, thread_amount))
             logger.info("Executed one batch")
             time.sleep(60)
     else:
-        rows = repository.fetch_current_metrics_batch(company_id_list, metric_list, True)
+        rows = repository.fetch_current_metrics_batch(company_id_list, metric_list, thread_amount)
 
     if sort_by_metric is not None:
         rows = metrics.sort_records(rows, sort_by_metric)
