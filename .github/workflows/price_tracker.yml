@@ -37,3 +37,26 @@ jobs:
           subject: "Stock Market Quotes Watch List - ${{ github.run_id }}"
           body: Watch List output in the attachment
           attachments: watch_list_output.csv
+
+      - name: Check if alert file exists
+        id: check_alert_file
+        run: |
+          if [ -f alert_on_companies.csv ]; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Send all price alert to mail
+        if: steps.check_alert_file.outputs.exists == 'true'
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          from: ${{ secrets.MAIL_USERNAME }}
+          to: ${{ secrets.MAIL_TO }}
+          subject: "Price Alert - ${{ github.run_id }}"
+          body: Alert on stocks out of its safe price range output in the attachment
+          attachments: alert_on_companies.csv
