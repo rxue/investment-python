@@ -1,5 +1,5 @@
-"""Unit tests for ``price_alert.Range``."""
-from investment.alert.price_alert import Range
+"""Unit tests for ``filter.Range``."""
+from investment.marketquote.filter import Range
 
 
 def test_has_true_when_value_is_within_range():

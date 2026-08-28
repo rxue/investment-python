@@ -89,19 +89,25 @@ def main(argv: Sequence[str] | None = None) -> None:
     parser = _build_parser()
     args = parser.parse_args(argv)
     if args.command == Command.METRICS:
-        company_symbols = args.company_symbols or _load_company_symbols(args.company_csv)
-        metrics, erratic_company_ids = _run_metrics(
+        company_ids = args.company_symbols or _load_company_symbols(args.company_csv)
+        metrics, erratic_company_ids, metrics_records_out_of_range = _run_metrics(
             names=args.metric_names,
-            company_ids=company_symbols,
+            company_ids=company_ids,
             sort_by=args.sort_by,
-            price_ranges=args.price_ranges,
+            price_ranges_str=args.price_ranges,
         )
         print(metrics.to_string(index=False))
-        print("Companies fetched with error")
-        print(erratic_company_ids.to_string(index=False))
+        if not erratic_company_ids.empty:
+            print("Companies fetched with error")
+            print(erratic_company_ids.to_string(index=False))
+        if metrics_records_out_of_range is not None:
+            print("Stocks with price out of range")
+            print(metrics_records_out_of_range.to_string(index=False))
+
         if args.output_csv_name:
             metrics.to_csv(args.output_csv_name, index=False)
             metrics.to_csv("companies_with_error", index=False)
+
 
     else:  # pragma: no cover - guarded by argparse's `required=True`
         parser.error(f"Unknown command: {args.command}")
