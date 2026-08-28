@@ -14,7 +14,11 @@ logger = logging.getLogger(__name__)
 
 @clock
 def _run_metrics(
-    names: str, company_ids: str, sort_by: str | None = None, price_ranges_str: str | None = None
+    names: str,
+    company_symbols: str | None = None,
+    company_csv: str | None = None,
+    sort_by: str | None = None,
+    price_ranges_str: str | None = None,
 ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     def extract_price_ranges() -> dict[str, Range]:
         if not price_ranges_str:
@@ -27,6 +31,16 @@ def _run_metrics(
                 end=float(end) if end else None,
             )
         return result
+
+    def _load_company_symbols(csv_source: str) -> str:
+        """Load comma-delimited Yahoo ticker symbols from a company CSV file.
+
+        ``csv_source`` may be a local file path or an http(s) URL. The CSV must
+        contain a "Yahoo Company Symbol" column, e.g.
+        https://gist.githubusercontent.com/rxue/7ec0914a8af1525d97e8dfd2ac5d61d7/raw/companies.csv
+        """
+        companies = pd.read_csv(csv_source)
+        return ",".join(companies["Yahoo Company Symbol"].astype(str))
 
     metric_names = [name.strip() for name in names.split(",")]
     try:
@@ -54,6 +68,7 @@ def _run_metrics(
                 f"metrics in --names ({', '.join(metric_names)})"
             )
 
+    company_ids = company_symbols or _load_company_symbols(company_csv)
     company_id_list = [symbol.strip() for symbol in company_ids.split(",")]
     batch_size = 100
     thread_amount = 10

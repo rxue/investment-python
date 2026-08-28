@@ -12,8 +12,6 @@ import sys
 from enum import StrEnum
 from typing import Sequence
 
-import pandas as pd
-
 from investment.cli.program_runner import _run_metrics
 from investment.marketquote import repository
 
@@ -68,17 +66,6 @@ def _build_parser() -> argparse.ArgumentParser:
 
     return parser
 
-def _load_company_symbols(csv_source: str) -> str:
-    """Load comma-delimited Yahoo ticker symbols from a company CSV file.
-
-    ``csv_source`` may be a local file path or an http(s) URL. The CSV must
-    contain a "Yahoo Company Symbol" column, e.g.
-    https://gist.githubusercontent.com/rxue/7ec0914a8af1525d97e8dfd2ac5d61d7/raw/companies.csv
-    """
-    companies = pd.read_csv(csv_source)
-    return ",".join(companies["Yahoo Company Symbol"].astype(str))
-
-
 
 def main(argv: Sequence[str] | None = None) -> None:
     logging.basicConfig(
@@ -89,10 +76,10 @@ def main(argv: Sequence[str] | None = None) -> None:
     parser = _build_parser()
     args = parser.parse_args(argv)
     if args.command == Command.METRICS:
-        company_ids = args.company_symbols or _load_company_symbols(args.company_csv)
         metrics, erratic_company_ids, metrics_records_out_of_range = _run_metrics(
             names=args.metric_names,
-            company_ids=company_ids,
+            company_symbols=args.company_symbols,
+            company_csv=args.company_csv,
             sort_by=args.sort_by,
             price_ranges_str=args.price_ranges,
         )
