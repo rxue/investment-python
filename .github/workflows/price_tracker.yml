@@ -23,7 +23,7 @@ jobs:
 
       - name: Run watch list
         run: |
-          uv run investment metrics PRICE,PRICE_IN_EURO,TRAILING_PE,RETURN_ON_EQUITY,PRICE_TO_BOOK,DIVIDEND_YIELD --company-csv https://gist.githubusercontent.com/rxue/7ec0914a8af1525d97e8dfd2ac5d61d7/raw/6d2ebe612d46170f452694b6682b29bfe5dadec6/companies.csv --price-ranges PFE:27.5:28.5,FIA1S.HE:4.6:5.5 --output-csv-name watch_list_output.csv
+          uv run investment metrics PRICE,PRICE_IN_EURO,TRAILING_PE,RETURN_ON_EQUITY,PRICE_TO_BOOK,DIVIDEND_YIELD --company-csv https://gist.githubusercontent.com/rxue/7ec0914a8af1525d97e8dfd2ac5d61d7/raw/6d2ebe612d46170f452694b6682b29bfe5dadec6/companies.csv --price-ranges PFE:27.5:28.5,FIA1S.HE:4.5:5.5,ELISA.HE:34.6:36.5,PDD:80:92,GIS:35:50,STZ:129:145 --output-csv-name watch_list_output.csv
 
       - name: Determine prices attachments
         id: prices_attachments
