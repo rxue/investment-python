@@ -17,6 +17,7 @@ import pandas as pd
 from investment.cli.program_runner import _run_metrics
 from investment.marketquote import repository
 
+
 class Command(StrEnum):
     PRICE = "price"
     METRICS = "metrics"
@@ -54,7 +55,8 @@ def _build_parser() -> argparse.ArgumentParser:
         metrics_parser.add_argument(
             "--price-ranges",
             default=None,
-            help="If given on the premises of price is also given, it should be in the format like COMPANY_ID1:12:22,COMPANY_ID2:100:",
+            help="If given on the premises of price is also given, it should be in the format "
+            "like COMPANY_ID1:12:22,COMPANY_ID2:100:",
         )
         metrics_parser.add_argument(
             "--output-csv-name",
@@ -88,7 +90,12 @@ def main(argv: Sequence[str] | None = None) -> None:
     args = parser.parse_args(argv)
     if args.command == Command.METRICS:
         company_symbols = args.company_symbols or _load_company_symbols(args.company_csv)
-        metrics,erratic_company_ids = _run_metrics(names=args.metric_names, company_ids=company_symbols, sort_by=args.sort_by, price_ranges=args.price_ranges)
+        metrics, erratic_company_ids = _run_metrics(
+            names=args.metric_names,
+            company_ids=company_symbols,
+            sort_by=args.sort_by,
+            price_ranges=args.price_ranges,
+        )
         print(metrics.to_string(index=False))
         print("Companies fetched with error")
         print(erratic_company_ids.to_string(index=False))
