@@ -68,7 +68,14 @@ def _run_metrics(
                 f"metrics in --names ({', '.join(metric_names)})"
             )
 
-    company_ids = company_symbols or _load_company_symbols(company_csv)
+    if company_symbols:
+        company_ids = company_symbols
+    elif company_csv is not None:
+        company_ids = _load_company_symbols(company_csv)
+    else:
+        raise SystemExit(
+            "investment metrics: error: one of --company-symbols or --company-csv is required"
+        )
     company_id_list = [symbol.strip() for symbol in company_ids.split(",")]
     batch_size = 100
     thread_amount = 10

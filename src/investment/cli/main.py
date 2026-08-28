@@ -93,7 +93,10 @@ def main(argv: Sequence[str] | None = None) -> None:
 
         if args.output_csv_name:
             metrics.to_csv(args.output_csv_name, index=False)
-            metrics.to_csv("companies_with_error", index=False)
+            if not erratic_company_ids.empty:
+                erratic_company_ids.to_csv("companies_with_error", index=False)
+            if not metrics_records_out_of_range.empty:
+                metrics_records_out_of_range.to_csv("alert_on_companies", index=False)
 
 
     else:  # pragma: no cover - guarded by argparse's `required=True`
