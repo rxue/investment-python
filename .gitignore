@@ -11,3 +11,9 @@ wheels/
 
 # IDE
 .idea/
+
+# Always keep GitHub Actions workflows tracked, even if broader
+# ignore rules (e.g. *.yml) get added above.
+!.github/
+!.github/workflows/
+!.github/workflows/*.yml
