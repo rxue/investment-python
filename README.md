@@ -29,9 +29,9 @@ uv run investment metrics METRIC_NAMES (--company-symbols SYMBOLS | --company-cs
   `PRICE_IN_EURO`, `MARKET_STATE`, `TRAILING_PE`, `DIVIDEND_YIELD`,
   `DIVIDEND_PAYOUT_RATIO`, `RETURN_ON_EQUITY`, `REGULAR_MARKET_CHANGE_PERCENT`,
   `PRICE_TO_BOOK`.
-- `--company-symbols` — company ticker symbols delimited by comma, e.g.
-  `AAPL,ELISA.HE`. Mutually exclusive with `--company-csv`; one of the two
-  is required.
+- `--company-symbols` — company ticker symbols as used on *Yahoo Finance*,
+  delimited by comma, e.g. `AAPL,ELISA.HE`. Mutually exclusive with
+  `--company-csv`; one of the two is required.
 - `--company-csv` — path or URL to a CSV file with a `Yahoo Company Symbol`
   column.
 - `--sort-by` — optional. Sort results ascending by this metric; must be one
