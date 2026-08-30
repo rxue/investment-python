@@ -17,8 +17,8 @@ from investment.marketquote import repository
 
 
 class Command(StrEnum):
-    PRICE = "price"
     METRICS = "metrics"
+    BENCHMARK = "benchmark"
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -61,9 +61,26 @@ def _build_parser() -> argparse.ArgumentParser:
             default=None,
             help="If given, also write the metrics result to this CSV file path.",
         )
-
+    def _build_benchmark_parser() -> None:
+        benchmark_parser = subparsers.add_parser(
+            Command.BENCHMARK, help="Benchmark stocks against an index or another stock."
+        )
+        benchmark_parser.add_argument(
+            "benchmark_id",
+            help="The benchmark index or stock ticker symbol to compare against, "
+            "e.g. VOO",
+        )
+        benchmark_parser.add_argument(
+            "company_id",
+            help="Company ticker symbol to benchmark against the target index, "
+            "ELISA.HE",
+        )
+        benchmark_parser.add_argument(
+            "start_date",
+            help="Start date of the period, in ISO format, e.g. 2024-01-01.",
+        )
     _build_metrics_parser()
-
+    _build_benchmark_parser()
     return parser
 
 
