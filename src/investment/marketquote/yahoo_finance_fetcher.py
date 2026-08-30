@@ -72,6 +72,83 @@ def fetcher_close_price(
 
     return last_close, currency, timestamp
 
+def fetcher_close_prices(
+    symbols: list[str], target_date: date
+) -> dict[str, tuple[numpy.float64, str, pandas.Timestamp]]:
+    """Fetch the closing price for each of ``symbols`` on or before ``target_date``.
+
+    Unlike :func:`fetcher_close_price`, this batches the price history fetch
+    for all ``symbols`` into a single ``yfinance.download`` call. Returns a
+    dict mapping each symbol to a ``(price, currency, timestamp)`` tuple, the
+    same shape returned by :func:`fetcher_close_price`.
+    """
+    if not symbols:
+        return {}
+
+    data = yf.download(
+        symbols,
+        start=target_date - timedelta(days=7),
+        end=target_date + timedelta(days=1),
+        interval="1d",
+        group_by="ticker",
+        progress=False,
+    )
+    if data is None:
+        raise ValueError(
+            f"No historical price found for company symbols {symbols} on or before {target_date}"
+        )
+
+    result: dict[str, tuple[numpy.float64, str, pandas.Timestamp]] = {}
+    for symbol in symbols:
+        history = data[symbol]
+        history = history[pandas.DatetimeIndex(history.index).date <= target_date]
+        history = history[history["Close"].notna()]
+        if history.empty:
+            raise ValueError(
+                f"No historical price found for company symbol {symbol} on or before {target_date}"
+            )
+
+        last_close = history["Close"].iloc[-1]
+        timestamp = history.index[-1]
+
+        currency = yf.Ticker(symbol).info.get("currency")
+        if currency is None:
+            raise ValueError(f"Cannot determine the price currency for company symbol {symbol}")
+
+        result[symbol] = (last_close, currency, timestamp)
+
+    return result
+
+
+def fetch_price_history(symbol: str, start: date, end: date) -> tuple[dict[date, float], str]:
+    """Fetch daily closing prices for ``symbol`` between ``start`` and ``end`` (inclusive).
+
+    Returns a ``(prices, currency)`` tuple: ``prices`` maps each trading date
+    in the range to its closing price, and ``currency`` is the quote currency.
+    """
+    ticker = yf.Ticker(symbol)
+    history = ticker.history(
+        start=start,
+        end=end + timedelta(days=1),
+        interval="1d",
+    )
+    if history.empty:
+        raise ValueError(
+            f"No historical price found for company symbol {symbol} between {start} and {end}"
+        )
+
+    dates = pandas.DatetimeIndex(history.index).date
+    prices = {
+        trading_date: float(close)
+        for trading_date, close in zip(dates, history["Close"], strict=True)
+    }
+
+    currency = ticker.info.get("currency")
+    if currency is None:
+        raise ValueError(f"Cannot determine the price currency for company symbol {symbol}")
+
+    return prices, currency
+
 
 def fetch_fundamental_metrics(symbol: str, metrics: Collection[str]) -> dict[str, Any]:
     """Fetch fundamental metrics (e.g. ``trailingPE``, ``dividendYield``,

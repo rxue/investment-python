@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, date
 from typing import NamedTuple
 
 
@@ -18,3 +18,10 @@ class Percentage(NamedTuple):
     def percent_value(self) -> float:
         return round(self.fraction_value * 100, 2)
 
+class Period(NamedTuple):
+    from_date:date
+    to_date:date
+
+class PriceSeries(NamedTuple):
+    currency:str
+    prices:dict[date,float]

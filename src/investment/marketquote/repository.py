@@ -8,7 +8,7 @@ from typing import Any
 from investment.marketquote import yahoo_finance_fetcher
 from investment.marketquote.fx_rate_fetcher import fetch_fx_rate_to_euro
 from investment.marketquote.metrics import Metric, MetricsRecord
-from investment.vo.value_objects import Percentage, Price
+from investment.vo.value_objects import Percentage, Period, Price, PriceSeries
 
 
 def fetch_price(symbol: str, target_date: date | None = None) -> Price:
@@ -115,3 +115,10 @@ def fetch_current_metrics_batch(
     records_without_errors = [record for record in records if not record.has_errors()]
     records_with_errors = [record for record in records if record.has_errors()]
     return records_without_errors, records_with_errors
+
+def fetch_historical_prices(company_id: str, period: Period) -> PriceSeries:
+    """Fetch the daily closing price series for ``company_id`` over ``period``."""
+    prices, currency = yahoo_finance_fetcher.fetch_price_history(
+        company_id, period.from_date, period.to_date
+    )
+    return PriceSeries(currency=currency, prices=prices)
