@@ -48,3 +48,31 @@ uv run investment metrics METRIC_NAMES (--company-symbols SYMBOLS | --company-cs
 ### Example Command
 
 `uv run investment metrics COMPANY_NAME,PRICE,REGULAR_MARKET_CHANGE_PERCENT,PRICE_IN_EURO,TRAILING_PE,RETURN_ON_EQUITY,PRICE_TO_BOOK,DIVIDEND_YIELD --sort-by REGULAR_MARKET_CHANGE_PERCENT --company-symbols ELISA.HE,FIA1S.HE,NOVO-B.CO`
+
+## Benchmarking
+
+Compare a stock's price performance against a benchmark (an index or another
+stock) over a given period: both series are rebased to an index of 100 at the
+start date, and a beta coefficient (`Cov(stock, benchmark) / Var(benchmark)`,
+from daily returns) is printed.
+
+```
+uv run investment benchmark BENCHMARK_ID:COMPANY_ID --start-date START_DATE --end-date END_DATE [--graph-directory DIRECTORY]
+```
+
+- `BENCHMARK_ID:COMPANY_ID` — required, positional. The benchmark and company
+  ticker symbols, delimited by a colon, e.g. `VOO:T`.
+- `--start-date` — required. Start date of the period, in ISO format, e.g.
+  `2021-08-30`.
+- `--end-date` — required. End date of the period, in ISO format, e.g.
+  `2026-08-30`.
+- `--graph-directory` — optional. Save the chart as a PNG named
+  `COMPANY_ID_vs_BENCHMARK_ID.png` in this directory. If omitted, the chart is
+  not saved.
+
+The chart is always displayed in a window (this blocks until the window is
+closed).
+
+### Example Command
+
+`uv run investment benchmark VOO:T --start-date 2021-08-30 --end-date 2026-08-30 --graph-directory ./charts`
