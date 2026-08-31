@@ -8,11 +8,12 @@ Usage examples::
 """
 import argparse
 import logging
+import os
 import sys
 from enum import StrEnum
 from typing import Sequence
 
-from investment.cli.program_runner import _run_metrics
+from investment.cli.program_runner import _generate_benchmark_chart, _run_benchmark, _run_metrics
 from investment.marketquote import repository
 
 
@@ -66,18 +67,25 @@ def _build_parser() -> argparse.ArgumentParser:
             Command.BENCHMARK, help="Benchmark stocks against an index or another stock."
         )
         benchmark_parser.add_argument(
-            "benchmark_id",
-            help="The benchmark index or stock ticker symbol to compare against, "
-            "e.g. VOO",
+            "benchmark_pair",
+            help="The benchmark and company ticker symbols, delimited by a colon, "
+            "e.g. VOO:T.",
         )
         benchmark_parser.add_argument(
-            "company_id",
-            help="Company ticker symbol to benchmark against the target index, "
-            "ELISA.HE",
-        )
-        benchmark_parser.add_argument(
-            "start_date",
+            "--start-date",
+            required=True,
             help="Start date of the period, in ISO format, e.g. 2024-01-01.",
+        )
+        benchmark_parser.add_argument(
+            "--end-date",
+            required=True,
+            help="End date of the period, in ISO format, e.g. 2026-01-01.",
+        )
+        benchmark_parser.add_argument(
+            "--graph-directory",
+            default=None,
+            help="If given, save the chart as a PNG into this directory. "
+            "If omitted, the chart is not saved.",
         )
     _build_metrics_parser()
     _build_benchmark_parser()
@@ -116,7 +124,34 @@ def main(argv: Sequence[str] | None = None) -> None:
                 erratic_company_ids.to_csv("companies_with_error.csv", index=False)
             if not metrics_records_out_of_range.empty:
                 metrics_records_out_of_range.to_csv("alert_on_companies.csv", index=False)
-
+    elif args.command == Command.BENCHMARK:
+        try:
+            benchmark_id, company_id = args.benchmark_pair.split(":")
+        except ValueError:
+            parser.error(
+                f"argument benchmark_pair: invalid format: {args.benchmark_pair!r} "
+                "(expected BENCHMARK_ID:COMPANY_ID, e.g. VOO:T)"
+            )
+        chart_data = _run_benchmark(
+            benchmark_id=benchmark_id,
+            company_id=company_id,
+            start_date=args.start_date,
+            end_date=args.end_date,
+        )
+        benchmark_index = chart_data.benchmark_index()
+        stock_index = chart_data.stock_index()
+        print(
+            f"Coefficient ({stock_index.symbol} vs {benchmark_index.symbol}): "
+            f"{chart_data.coefficient():.4f}"
+        )
+        output_path = None
+        if args.graph_directory:
+            output_path = os.path.join(
+                args.graph_directory, f"{stock_index.symbol}_vs_{benchmark_index.symbol}.png"
+            )
+        chart_path = _generate_benchmark_chart(chart_data, output_path=output_path)
+        if chart_path is not None:
+            print(f"Chart saved to {chart_path}")
 
     else:  # pragma: no cover - guarded by argparse's `required=True`
         parser.error(f"Unknown command: {args.command}")

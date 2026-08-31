@@ -2,12 +2,16 @@
 
 import logging
 import time
+from datetime import date
 
+import matplotlib.pyplot as plt
 import pandas as pd
 
+from investment.benchmark.chart_data import ChartData
 from investment.marketquote import metrics, repository
 from investment.marketquote.filter import Range, records_out_of_range
 from investment.util.decorator import clock
+from investment.vo.value_objects import Period
 
 logger = logging.getLogger(__name__)
 
@@ -108,3 +112,42 @@ def _run_metrics(
         pd.DataFrame([r.company_id for r in erratic_rows], columns=["non-existing company"]),
         records_out_of_range_df,
     )
+
+def _run_benchmark(benchmark_id:str,company_id:str,start_date:str,end_date:str) -> ChartData:
+    period = Period(from_date=date.fromisoformat(start_date), to_date=date.fromisoformat(end_date))
+    return ChartData.generate(benchmark_id, company_id, period)
+
+def _generate_benchmark_chart(
+    chart_data:ChartData, output_path:str|None=None, show:bool=True
+) -> str|None:
+    """Plot the benchmark's and stock's rebased index series.
+
+    Displays the chart in a window by default (``show=True``). Saved to
+    ``output_path`` only if given; returns that path, or ``None`` if not saved.
+    """
+    benchmark_index = chart_data.benchmark_index()
+    stock_index = chart_data.stock_index()
+
+    fig, ax = plt.subplots()
+    ax.plot(
+        benchmark_index.index_series.index.to_numpy(), benchmark_index.index_series.to_numpy(),
+        label=benchmark_index.symbol,
+    )
+    ax.plot(
+        stock_index.index_series.index.to_numpy(), stock_index.index_series.to_numpy(),
+        label=stock_index.symbol,
+    )
+    ax.axhline(chart_data.base, color="gray", linestyle="--", linewidth=0.8)
+    ax.set_title(
+        f"{stock_index.symbol} vs {benchmark_index.symbol} — indexed to {chart_data.base:.0f}"
+    )
+    ax.set_ylabel("Index value")
+    ax.legend()
+    fig.autofmt_xdate()
+
+    if output_path is not None:
+        fig.savefig(output_path, dpi=150)
+    if show:
+        plt.show()
+    plt.close(fig)
+    return output_path
