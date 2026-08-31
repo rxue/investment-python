@@ -102,9 +102,11 @@ def main(argv: Sequence[str] | None = None) -> None:
         )
         print(metrics.to_string(index=False))
         if not erratic_company_ids.empty:
+            print()
             print("Companies fetched with error")
             print(erratic_company_ids.to_string(index=False))
         if metrics_records_out_of_range is not None:
+            print()
             print("Stocks with price out of range")
             print(metrics_records_out_of_range.to_string(index=False))
 

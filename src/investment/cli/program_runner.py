@@ -105,6 +105,6 @@ def _run_metrics(
         records_out_of_range_df = pd.DataFrame([r.to_readable() for r in records_outside])
     return (
         pd.DataFrame([r.to_readable() for r in rows]),
-        pd.DataFrame([r.company_id for r in erratic_rows]),
+        pd.DataFrame([r.company_id for r in erratic_rows], columns=["non-existing company"]),
         records_out_of_range_df,
     )
