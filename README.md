@@ -19,6 +19,7 @@ uv sync
 Then run the tool with `uv run investment ...`.
 
 ## Usage
+### Fetch Metrics
 
 ```
 uv run investment metrics METRIC_NAMES (--company-symbols SYMBOLS | --company-csv PATH_OR_URL) [options]
@@ -45,11 +46,11 @@ uv run investment metrics METRIC_NAMES (--company-symbols SYMBOLS | --company-cs
   written to `companies_with_error.csv`, and any companies outside their
   price range (per `--price-ranges`) are written to `alert_on_companies.csv`.
 
-### Example Command
+#### Example Command
 
 `uv run investment metrics COMPANY_NAME,PRICE,REGULAR_MARKET_CHANGE_PERCENT,PRICE_IN_EURO,TRAILING_PE,RETURN_ON_EQUITY,PRICE_TO_BOOK,DIVIDEND_YIELD --sort-by REGULAR_MARKET_CHANGE_PERCENT --company-symbols ELISA.HE,FIA1S.HE,NOVO-B.CO`
 
-## Benchmarking
+### Benchmarking
 
 Compare a stock's price performance against a benchmark (an index or another
 stock) over a given period: both series are rebased to an index of 100 at the
@@ -73,6 +74,6 @@ uv run investment benchmark BENCHMARK_ID:COMPANY_ID --start-date START_DATE --en
 The chart is always displayed in a window (this blocks until the window is
 closed).
 
-### Example Command
+#### Example Command
 
 `uv run investment benchmark VOO:T --start-date 2021-08-30 --end-date 2026-08-30 --graph-directory ./charts`
