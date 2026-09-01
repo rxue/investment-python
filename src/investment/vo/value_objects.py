@@ -12,6 +12,8 @@ class Price(NamedTuple):
         return f"{self.amount()} {self.currency}"
     def currency_value(self) -> str:
         return self.currency.upper()
+    def date(self) -> date:
+        return self.timestamp.date()
 
 class Percentage(NamedTuple):
     fraction_value:float
