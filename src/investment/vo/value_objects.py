@@ -1,4 +1,4 @@
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from typing import NamedTuple
 
 
@@ -27,3 +27,17 @@ class Period(NamedTuple):
 class PriceSeries(NamedTuple):
     currency:str
     cent_prices:dict[date,int]
+    def get_price(self, date:date) -> Price:
+        """Return the price on ``date``, falling back to the most recent
+        earlier date in the series (e.g. a weekend or holiday has no price
+        of its own, so this walks backwards to the last trading day)."""
+        search_date = date
+        while search_date not in self.cent_prices:
+            search_date -= timedelta(days=1)
+            if search_date < min(self.cent_prices):
+                raise KeyError(f"no price on or before {date} in the series")
+        return Price(
+            cent_value=self.cent_prices[search_date],
+            currency=self.currency,
+            timestamp=datetime.combine(search_date, datetime.min.time()),
+        )
