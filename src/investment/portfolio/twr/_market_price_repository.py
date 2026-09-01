@@ -1,7 +1,9 @@
 from datetime import date, datetime
+
 from investment.marketquote.repository import fetch_historical_prices, fetch_price_in_euro
 from investment.util.constants import EUR
 from investment.vo.value_objects import Period, Price, PriceSeries
+
 
 def _find_historical_euro_price_series(security_id:str, period:Period) -> PriceSeries:
     price_series = fetch_historical_prices(security_id, period)
