@@ -6,6 +6,8 @@ from functools import cache
 
 import requests
 
+from investment.util.constants import EUR
+
 logger = logging.getLogger(__name__)
 
 @cache
@@ -28,7 +30,7 @@ def fetch_fx_rate_to_euro(base_currency: str, target_date: date) -> tuple[date, 
     :raises requests.HTTPError: if the ECB API request fails.
     :raises StopIteration: if the API response contains no observations.
     """
-    if base_currency == 'EUR':
+    if base_currency == EUR:
         return target_date, 1
     url = f"https://data-api.ecb.europa.eu/service/data/EXR/D.{base_currency}.EUR.SP00.A"
     today = date.today()
