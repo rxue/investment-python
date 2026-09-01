@@ -17,7 +17,7 @@ class ChartData(NamedTuple):
 
 
     def _to_index(self, price_series:PriceSeries) -> pd.Series:
-        prices = pd.Series(price_series.prices).sort_index()
+        prices = pd.Series(price_series.cent_prices).sort_index()
         return prices / prices.iloc[0] * self.base
 
     def benchmark_index(self) -> LabeledIndexSeries:
@@ -38,8 +38,8 @@ class ChartData(NamedTuple):
         Beta = Cov(stock returns, benchmark returns) / Var(benchmark returns),
         computed from daily returns of the raw price series.
         """
-        benchmark_prices = pd.Series(self.benchmark[1].prices).sort_index()
-        stock_prices = pd.Series(self.stock[1].prices).sort_index()
+        benchmark_prices = pd.Series(self.benchmark[1].cent_prices).sort_index()
+        stock_prices = pd.Series(self.stock[1].cent_prices).sort_index()
         benchmark_returns = benchmark_prices.pct_change().dropna()
         stock_returns = stock_prices.pct_change().dropna()
         aligned = pd.concat(

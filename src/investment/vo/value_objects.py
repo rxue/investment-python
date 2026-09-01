@@ -24,4 +24,4 @@ class Period(NamedTuple):
 
 class PriceSeries(NamedTuple):
     currency:str
-    prices:dict[date,float]
+    cent_prices:dict[date,int]

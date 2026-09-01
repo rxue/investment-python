@@ -3,7 +3,7 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import date, datetime, timezone
 from decimal import ROUND_HALF_UP, Decimal
 from types import MappingProxyType
-from typing import Any
+from typing import Any, Final
 
 from investment.marketquote import yahoo_finance_fetcher
 from investment.marketquote.fx_rate_fetcher import fetch_fx_rate_to_euro
@@ -38,12 +38,13 @@ def fetch_price_in_euro(
 ) -> Price:
     price = existing_price if existing_price is not None else fetch_price(company_id, target_date)
     currency = price.currency_value()
-    if currency == 'EURO':
+    euro:Final = 'EURO'
+    if currency == euro:
         return price
     else:
         _, fx_rate = fetch_fx_rate_to_euro(currency, date.today())
         price_value = round(price.cent_value / fx_rate)
-        return Price(price_value, "EUR", price.timestamp)
+        return Price(price_value, euro, price.timestamp)
 
 
 def fetch_current_metrics(
@@ -121,4 +122,8 @@ def fetch_historical_prices(company_id: str, period: Period) -> PriceSeries:
     prices, currency = yahoo_finance_fetcher.fetch_price_history(
         company_id, period.from_date, period.to_date
     )
-    return PriceSeries(currency=currency, prices=prices)
+    cent_prices = {
+        trading_date: int((Decimal(str(price)) * 100).to_integral_value(rounding=ROUND_HALF_UP))
+        for trading_date, price in prices.items()
+    }
+    return PriceSeries(currency=currency, cent_prices=cent_prices)

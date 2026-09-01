@@ -34,3 +34,12 @@ revision: the `*` marked in the hour/min/day etc. means every. For instance, `cr
 # Domain Knowledge
 ## *Index*
 A type of statistic with no natural units of measurement; for example, *correlation*
+## TWR calculation
+### External Cashflow
+key question of whether a transaction is an *external cashflow*: did the money leave the investment portfolio without being charged for an investment asset?
+
+So there are the following types of transactions considered as external cashflow:
+* deposit/withdrawal
+* expenses irrelevant to the investment
+### Corner Cases
+Question: is the fx rate fluctuating during holidays?

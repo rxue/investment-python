@@ -62,8 +62,8 @@ def test_fetch_historical_prices_returns_daily_close_series_for_period():
     price_series = fetch_historical_prices("AAPL", period)
 
     assert price_series.currency == "USD"
-    assert price_series.prices
+    assert price_series.cent_prices
     assert len(price_series) > 2
-    for trading_date, price in price_series.prices.items():
+    for trading_date, cent_price in price_series.cent_prices.items():
         assert start <= trading_date <= end
-        assert price > 0
+        assert cent_price > 0
