@@ -6,8 +6,9 @@ from types import MappingProxyType
 from typing import Any, Final
 
 from investment.marketquote import yahoo_finance_fetcher
-from investment.marketquote.fx_rate_fetcher import fetch_fx_rate_to_euro
+from investment.marketquote._fx_rate_fetcher import fetch_fx_rate_to_euro
 from investment.marketquote.metrics import Metric, MetricsRecord
+from investment.util.constants import EUR
 from investment.vo.value_objects import Percentage, Period, Price, PriceSeries
 
 
@@ -33,19 +34,14 @@ def fetch_price(symbol: str, target_date: date | None = None) -> Price:
         timestamp=timestamp,
     )
 
-def fetch_price_in_euro(
-    company_id: str, target_date: date | None = None, existing_price: Price | None = None
-) -> Price:
-    price = existing_price if existing_price is not None else fetch_price(company_id, target_date)
-    currency = price.currency_value()
-    euro:Final = 'EURO'
-    if currency == euro:
-        return price
+def fetch_price_in_euro(existing_price: Price) -> Price:
+    currency:Final = existing_price.currency_value()
+    if currency == EUR:
+        return existing_price
     else:
-        _, fx_rate = fetch_fx_rate_to_euro(currency, date.today())
-        price_value = round(price.cent_value / fx_rate)
-        return Price(price_value, euro, price.timestamp)
-
+        _, fx_rate = fetch_fx_rate_to_euro(currency, existing_price.date())
+        price_value = round(existing_price.cent_value / fx_rate)
+        return Price(price_value, EUR, existing_price.timestamp)
 
 def fetch_current_metrics(
         company_id: str, metrics: Collection[Metric]
@@ -85,9 +81,8 @@ def fetch_current_metrics(
         if not isinstance(existing_price, Price):
             existing_price = None
         try:
-            combined_metrics[Metric.PRICE_IN_EURO] = fetch_price_in_euro(
-                company_id=company_id, existing_price=existing_price
-            )
+            price = existing_price if existing_price is not None else fetch_price(company_id)
+            combined_metrics[Metric.PRICE_IN_EURO] = fetch_price_in_euro(price)
         except Exception as e:
             combined_metrics[Metric.PRICE_IN_EURO] = e
     return MetricsRecord(company_id=company_id, metrics=MappingProxyType(combined_metrics))

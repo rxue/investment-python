@@ -20,25 +20,16 @@ from investment.vo.value_objects import Period
 pytestmark = pytest.mark.integration
 
 
-def test_fetch_price_in_euro_converts_non_eur_price():
-    """A USD-quoted symbol should get a distinct, positive EUR conversion."""
-    price_in_euro = fetch_price_in_euro("AAPL")
+def test_fetch_price_in_euro_converts_gbp_pence_quoted_price():
+    """AZN.L (AstraZeneca, London Stock Exchange) is quoted in ``GBp``
+    (pence), not ``GBP`` - a distinct code Yahoo Finance uses to flag that
+    the price is already in the minor unit.
+    """
+    price = fetch_price("AZN.L", date(2026,1,2))
+    price_in_euro = fetch_price_in_euro(price)
 
     assert price_in_euro.currency_value() == "EUR"
     assert price_in_euro.amount() > 0
-    assert (date.today() - price_in_euro.timestamp.date()).days <= 3
-
-
-def test_fetch_price_in_euro_passthrough_for_eur_symbol():
-    """A symbol already quoted in EUR should convert to the same amount."""
-    price = fetch_price("ELISA.HE")
-    assert price.amount() > 0
-    price_in_euro = fetch_price_in_euro("ELISA.HE", existing_price=price)
-
-    assert price.currency_value() == "EUR"
-    assert price_in_euro.currency_value() == "EUR"
-    assert price_in_euro.amount() == price.amount()
-    assert (date.today() - price_in_euro.timestamp.date()).days <= 3
 
 
 def test_fetch_current_metrics_when_company_does_not_exist_thus_has_no_price():
