@@ -1,6 +1,6 @@
 # investment-python
 
-A command-line tool for pulling stock market quotes and fundamentals (price,
+A library along with CLI (currently only working in Linux) for pulling stock market quotes and fundamentals (price,
 P/E, ROE, P/B, dividend yield, and more) for a watch list of companies given
 as ticker symbols or a CSV file. It can sort the results, flag stocks trading
 outside a given price range, and export everything to CSV.
@@ -18,7 +18,7 @@ uv sync
 
 Then run the tool with `uv run investment ...`.
 
-## Usage
+## CLI Usage
 ### Fetch Metrics
 
 ```
