@@ -9,7 +9,7 @@ def _money_to_cent_value(money: Decimal) -> int:
 
 
 class Transaction(Protocol):
-    date: date
+    date:date
     money:Decimal
     def cent_value(self) -> int: ...
     def is_external_cashflow(self) -> bool: ...
