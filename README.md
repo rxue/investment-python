@@ -85,3 +85,7 @@ closed).
 ```
 uv run investment benchmark VOO:T --start-date 2021-08-30 --end-date 2026-08-30 --graph-directory ./charts
 ```
+
+##### Output screenshot
+
+![Example benchmark command output](images/benchmark.png)
