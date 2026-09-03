@@ -17,7 +17,7 @@ def test_get_price_returns_the_price_on_the_requested_date():
     price = price_series.get_price(trading_date)
 
     assert price.cent_value == 12345
-    assert price.currency_value() == "USD"
+    assert price.currency == "USD"
     assert price.date() == trading_date
 
 
