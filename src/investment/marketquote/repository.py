@@ -35,12 +35,16 @@ def fetch_price(symbol: str, target_date: date | None = None) -> Price:
     )
 
 def fetch_price_in_euro(existing_price: Price) -> Price:
-    currency:Final = existing_price.currency_value()
+    currency:Final = existing_price.currency
     if currency == EUR:
         return existing_price
     else:
-        _, fx_rate = fetch_fx_rate_to_euro(currency, existing_price.date())
-        price_value = round(existing_price.cent_value / fx_rate)
+        if currency == "GBp":
+            _, fx_rate = fetch_fx_rate_to_euro("GBP", existing_price.date())
+            price_value = round((existing_price.cent_value/100) / fx_rate)
+        else:
+            _, fx_rate = fetch_fx_rate_to_euro(currency, existing_price.date())
+            price_value = round(existing_price.cent_value / fx_rate)
         return Price(price_value, EUR, existing_price.timestamp)
 
 def fetch_current_metrics(

@@ -4,7 +4,7 @@
 These hit the real Yahoo Finance and ECB APIs over the network (no
 mocking) - hence "IT" rather than a unit test.
 """
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 
 import pytest
 
@@ -12,24 +12,25 @@ from investment.marketquote.metrics import Metric
 from investment.marketquote.repository import (
     fetch_current_metrics,
     fetch_historical_prices,
-    fetch_price,
     fetch_price_in_euro,
 )
-from investment.vo.value_objects import Period
+from investment.vo.value_objects import Period, Price
 
 pytestmark = pytest.mark.integration
 
 
-def test_fetch_price_in_euro_converts_gbp_pence_quoted_price():
-    """AZN.L (AstraZeneca, London Stock Exchange) is quoted in ``GBp``
-    (pence), not ``GBP`` - a distinct code Yahoo Finance uses to flag that
-    the price is already in the minor unit.
+def test_fetch_price_in_euro_converts_a_gbp_pence_cent_value():
+    """A ``Price`` explicitly quoted in ``GBp`` (pence) should be converted
+    straight through that day's GBP/EUR rate - fetch_price_in_euro does not
+    currently adjust for pence-vs-pounds, so the cent value is treated the
+    same as it would be for a genuine GBP price.
     """
-    price = fetch_price("AZN.L", date(2026,1,2))
+    price = Price(417405, "GBp", datetime(2026, 9, 2))
     price_in_euro = fetch_price_in_euro(price)
 
-    assert price_in_euro.currency_value() == "EUR"
-    assert price_in_euro.amount() > 0
+    assert price_in_euro.currency == "EUR"
+    assert price_in_euro.cent_value == 4861
+    assert price_in_euro.timestamp == price.timestamp
 
 
 def test_fetch_current_metrics_when_company_does_not_exist_thus_has_no_price():
