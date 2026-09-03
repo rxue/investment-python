@@ -52,6 +52,8 @@ uv run investment metrics METRIC_NAMES (--company-symbols SYMBOLS | --company-cs
 uv run investment metrics COMPANY_NAME,PRICE,REGULAR_MARKET_CHANGE_PERCENT,PRICE_IN_EURO,TRAILING_PE,RETURN_ON_EQUITY,PRICE_TO_BOOK,DIVIDEND_YIELD --sort-by REGULAR_MARKET_CHANGE_PERCENT --company-symbols ELISA.HE,FIA1S.HE,NOVO-B.CO
 ```
 
+##### Output screenshot
+
 ![Example metrics command output](images/metrics.png)
 
 ### Benchmarking
