@@ -32,6 +32,8 @@ revision: the `*` marked in the hour/min/day etc. means every. For instance, `cr
 ### `gh workflow run price_tracker.yml` to trigger the event
 
 # Domain Knowledge
+## The *ECB* RESTful API
+The endpoint for fetching *FX rate* seems to assume that the day given for fetching *FX rate* is a business day (20260904)
 ## *Index*
 A type of statistic with no natural units of measurement; for example, *correlation*
 ## TWR calculation
