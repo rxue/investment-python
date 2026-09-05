@@ -8,7 +8,7 @@ from datetime import date
 
 import pytest
 
-from investment.marketquote._fx_rate_fetcher import fetch_fx_rate_to_euro
+from investment.marketquote._fx_rate_fetcher import fetch_fx_rate_from_euro
 from investment.marketquote.repository import fetch_historical_prices
 from investment.portfolio.twr._market_price_repository import (
     _find_historical_euro_price_series,
@@ -44,6 +44,6 @@ def test_find_historical_price_series_matches_usd_price_times_fx_rate():
 
     assert usd_price_series.cent_prices.keys() == euro_price_series.cent_prices.keys()
     for trading_date, usd_cent_price in usd_price_series.cent_prices.items():
-        _, fx_rate = fetch_fx_rate_to_euro("USD", trading_date)
+        _, fx_rate = fetch_fx_rate_from_euro("USD", trading_date)
         expected_euro_cent_price = round(usd_cent_price / fx_rate)
         assert euro_price_series.cent_prices[trading_date] == expected_euro_cent_price

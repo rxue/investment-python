@@ -6,10 +6,13 @@ from types import MappingProxyType
 from typing import Any, Final
 
 from investment.marketquote import yahoo_finance_fetcher
-from investment.marketquote._fx_rate_fetcher import fetch_fx_rate_to_euro
+from investment.marketquote._fx_rate_fetcher import fetch_fx_rate_from_euro
+from investment.marketquote._fx_rate_fetcher import (
+    fetch_fx_rate_series_from_euro as _fetch_fx_rate_series_from_euro,
+)
 from investment.marketquote.metrics import Metric, MetricsRecord
-from investment.util.constants import EUR
-from investment.vo.value_objects import Percentage, Period, Price, PriceSeries
+from investment.util.util import EUR, convert_to_euro_cent
+from investment.vo.value_objects import FxRateSeries, Percentage, Period, Price, PriceSeries
 
 
 def fetch_price(symbol: str, target_date: date | None = None) -> Price:
@@ -34,18 +37,15 @@ def fetch_price(symbol: str, target_date: date | None = None) -> Price:
         timestamp=timestamp,
     )
 
-def fetch_price_in_euro(existing_price: Price) -> Price:
+def _fetch_price_in_euro(existing_price: Price) -> Price:
     currency:Final = existing_price.currency
     if currency == EUR:
         return existing_price
     else:
-        if currency == "GBp":
-            _, fx_rate = fetch_fx_rate_to_euro("GBP", existing_price.date())
-            price_value = round((existing_price.cent_value/100) / fx_rate)
-        else:
-            _, fx_rate = fetch_fx_rate_to_euro(currency, existing_price.date())
-            price_value = round(existing_price.cent_value / fx_rate)
-        return Price(price_value, EUR, existing_price.timestamp)
+        _, fx_rate = fetch_fx_rate_from_euro(currency, existing_price.date())
+        price_value_in_euro = convert_to_euro_cent(existing_price, fx_rate)
+        return Price(price_value_in_euro, EUR, existing_price.timestamp)
+
 
 def fetch_current_metrics(
         company_id: str, metrics: Collection[Metric]
@@ -86,7 +86,7 @@ def fetch_current_metrics(
             existing_price = None
         try:
             price = existing_price if existing_price is not None else fetch_price(company_id)
-            combined_metrics[Metric.PRICE_IN_EURO] = fetch_price_in_euro(price)
+            combined_metrics[Metric.PRICE_IN_EURO] = _fetch_price_in_euro(price)
         except Exception as e:
             combined_metrics[Metric.PRICE_IN_EURO] = e
     return MetricsRecord(company_id=company_id, metrics=MappingProxyType(combined_metrics))
@@ -116,7 +116,7 @@ def fetch_current_metrics_batch(
     records_with_errors = [record for record in records if record.has_errors()]
     return records_without_errors, records_with_errors
 
-def fetch_historical_prices(company_id: str, period: Period) -> PriceSeries:
+def fetch_historical_prices(company_id:str, period:Period) -> PriceSeries:
     """Fetch the daily closing price series for ``company_id`` over ``period``."""
     prices, currency = yahoo_finance_fetcher.fetch_price_history(
         company_id, period.from_date, period.to_date
@@ -126,3 +126,13 @@ def fetch_historical_prices(company_id: str, period: Period) -> PriceSeries:
         for trading_date, price in prices.items()
     }
     return PriceSeries(currency=currency, cent_prices=cent_prices)
+
+def fetch_fx_rate_series_from_euro(currency:str, period:Period) -> FxRateSeries:
+    """Fetch the EUR-to-``currency`` exchange rate for every day the ECB
+    published one within ``period`` (both dates inclusive)."""
+    rate_pairs = _fetch_fx_rate_series_from_euro(currency, period.from_date, period.to_date)
+    return FxRateSeries(
+        base_currency=EUR,
+        quote_currency=currency,
+        values=dict(rate_pairs),
+    )

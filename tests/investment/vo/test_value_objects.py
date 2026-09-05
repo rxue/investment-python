@@ -1,7 +1,8 @@
-"""Unit tests for ``value_objects.PriceSeries``."""
+"""Unit tests for ``value_objects.PriceSeries`` and ``value_objects.FxRateSeries``."""
 from datetime import date, timedelta
+from decimal import Decimal
 
-from investment.vo.value_objects import PriceSeries
+from investment.vo.value_objects import FxRateSeries, PriceSeries
 
 
 def test_get_price_returns_the_price_on_the_requested_date():
@@ -52,3 +53,23 @@ def test_get_price_on_a_weekend_skips_a_missing_friday():
 
     assert price.cent_value == 12000
     assert price.date() == thursday
+
+
+def test_get_falls_back_to_the_last_published_rate():
+    """Only 2025-12-24 (the start) and 2025-12-29 (the end) have a published
+    rate - the Christmas holidays/weekend in between don't - so ``get``
+    should return each date's own rate when present, and otherwise fall
+    back to the most recent earlier published date.
+    """
+    fx_rate_series = FxRateSeries(
+        base_currency="EUR",
+        quote_currency="USD",
+        values={
+            date(2025, 12, 24): Decimal("1.1787"),
+            date(2025, 12, 29): Decimal("1.1766"),
+        },
+    )
+
+    assert fx_rate_series.get(date(2025, 12, 24)) == Decimal("1.1787")
+    assert fx_rate_series.get(date(2025, 12, 26)) == Decimal("1.1787")
+    assert fx_rate_series.get(date(2025, 12, 29)) == Decimal("1.1766")
