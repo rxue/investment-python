@@ -49,10 +49,29 @@ class Deposit(NamedTuple):
     def is_external_cashflow(self) -> bool:
         return True
 
-class Expense(NamedTuple):
+class ExpenseType(Enum):
+    INVESTMENT = auto()
+    NON_INVESTMENT = auto()
+
+class Expense(Transaction, Protocol):
+    def type(self) -> ExpenseType:...
+
+class InvestmentExpense(NamedTuple):
+    date: date
+    money:Decimal
+    def cent_value(self) -> int:
+        return _money_to_cent_value(self.money)
+    def is_external_cashflow(self) -> bool:
+        return False
+    def type(self):
+        return ExpenseType.INVESTMENT
+
+class NonInvestmentExpense(NamedTuple):
     date: date
     money:Decimal
     def cent_value(self) -> int:
         return _money_to_cent_value(self.money)
     def is_external_cashflow(self) -> bool:
         return True
+    def type(self):
+        return ExpenseType.NON_INVESTMENT
