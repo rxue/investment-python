@@ -136,3 +136,28 @@ def fetch_fx_rate_series_from_euro(currency:str, period:Period) -> FxRateSeries:
         quote_currency=currency,
         values=dict(rate_pairs),
     )
+
+def fetch_fx_rate_series(base_currency:str, quote_currency:str, period:Period) -> FxRateSeries:
+    """Fetch the ``base_currency``-to-``quote_currency`` exchange rate for every
+    day the ECB published a rate for both currencies within ``period`` (both
+    dates inclusive).
+
+    The ECB only publishes EUR-denominated reference rates, so a non-EUR pair
+    is triangulated through EUR: rate = (EUR-to-``quote_currency``) /
+    (EUR-to-``base_currency``). This also covers ``base_currency`` or
+    ``quote_currency`` being EUR, and ``base_currency == quote_currency``,
+    without any special-casing, since ``fetch_fx_rate_series_from_euro``
+    already returns an identity (rate ``1``) series for EUR.
+    """
+    base_rates = fetch_fx_rate_series_from_euro(base_currency, period)
+    quote_rates = fetch_fx_rate_series_from_euro(quote_currency, period)
+    common_dates = base_rates.values.keys() & quote_rates.values.keys()
+    values = {
+        rate_date: quote_rates.values[rate_date] / base_rates.values[rate_date]
+        for rate_date in common_dates
+    }
+    return FxRateSeries(
+        base_currency=base_currency,
+        quote_currency=quote_currency,
+        values=values,
+    )
