@@ -5,6 +5,7 @@ import time
 from datetime import date
 
 import matplotlib.pyplot as plt
+import numpy
 import pandas as pd
 
 from investment.benchmark.chart_data import ChartData
@@ -130,11 +131,13 @@ def _generate_benchmark_chart(
 
     fig, ax = plt.subplots()
     ax.plot(
-        list(benchmark_index.index_series.keys()), list(benchmark_index.index_series.values()),
+        numpy.array(list(benchmark_index.dates())),
+        numpy.array(list(benchmark_index.index_values())),
         label=benchmark_index.symbol,
     )
     ax.plot(
-        list(stock_index.index_series.keys()), list(stock_index.index_series.values()),
+        numpy.array(list(stock_index.dates())),
+        numpy.array(list(stock_index.index_values())),
         label=stock_index.symbol,
     )
     ax.axhline(chart_data.base, color="gray", linestyle="--", linewidth=0.8)

@@ -6,9 +6,14 @@ from typing import NamedTuple
 from investment.marketquote.repository import fetch_historical_prices
 from investment.vo.value_objects import Period, PriceSeries
 
+
 class LabeledIndexSeries(NamedTuple):
     symbol: str
     index_series: dict[date, float]
+    def dates(self):
+        return self.index_series.keys()
+    def index_values(self):
+        return self.index_series.values()
 
 class ChartData(NamedTuple):
     benchmark: tuple[str,PriceSeries]
@@ -16,7 +21,7 @@ class ChartData(NamedTuple):
     base:float=100
 
 
-    def _to_index(self, price_series:PriceSeries) -> tuple[date,float]:
+    def _to_index(self, price_series:PriceSeries) -> dict[date,float]:
         first_price:int = next(iter(price_series.cent_prices.values()))
         return {date:price/first_price*100 for date,price in price_series.cent_prices.items()}
 
@@ -63,6 +68,6 @@ class ChartData(NamedTuple):
 
     @staticmethod
     def generate(benchmark_id:str, company_id:str, period:Period) -> "ChartData":
-        benchmark_price_series = fetch_historical_prices(benchmark_id, period)
-        stock_price_series = fetch_historical_prices(company_id, period)
+        benchmark_price_series:PriceSeries = fetch_historical_prices(benchmark_id, period)
+        stock_price_series:PriceSeries = fetch_historical_prices(company_id, period)
         return ChartData((benchmark_id, benchmark_price_series), (company_id, stock_price_series))
