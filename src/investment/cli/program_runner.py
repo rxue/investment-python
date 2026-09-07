@@ -130,11 +130,11 @@ def _generate_benchmark_chart(
 
     fig, ax = plt.subplots()
     ax.plot(
-        benchmark_index.index_series.index.to_numpy(), benchmark_index.index_series.to_numpy(),
+        list(benchmark_index.index_series.keys()), list(benchmark_index.index_series.values()),
         label=benchmark_index.symbol,
     )
     ax.plot(
-        stock_index.index_series.index.to_numpy(), stock_index.index_series.to_numpy(),
+        list(stock_index.index_series.keys()), list(stock_index.index_series.values()),
         label=stock_index.symbol,
     )
     ax.axhline(chart_data.base, color="gray", linestyle="--", linewidth=0.8)

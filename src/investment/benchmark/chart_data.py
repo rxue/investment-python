@@ -1,14 +1,14 @@
+import itertools
+import statistics
+from datetime import date
 from typing import NamedTuple
-
-import pandas as pd
 
 from investment.marketquote.repository import fetch_historical_prices
 from investment.vo.value_objects import Period, PriceSeries
 
-
 class LabeledIndexSeries(NamedTuple):
     symbol: str
-    index_series: pd.Series
+    index_series: dict[date, float]
 
 class ChartData(NamedTuple):
     benchmark: tuple[str,PriceSeries]
@@ -16,9 +16,9 @@ class ChartData(NamedTuple):
     base:float=100
 
 
-    def _to_index(self, price_series:PriceSeries) -> pd.Series:
-        prices = pd.Series(price_series.cent_prices).sort_index()
-        return prices / prices.iloc[0] * self.base
+    def _to_index(self, price_series:PriceSeries) -> tuple[date,float]:
+        first_price:int = next(iter(price_series.cent_prices.values()))
+        return {date:price/first_price*100 for date,price in price_series.cent_prices.items()}
 
     def benchmark_index(self) -> LabeledIndexSeries:
         """Return the benchmark's price series rebased to ``base`` at its first date."""
@@ -36,18 +36,30 @@ class ChartData(NamedTuple):
         """Return the stock's beta relative to the benchmark over the period.
 
         Beta = Cov(stock returns, benchmark returns) / Var(benchmark returns),
-        computed from daily returns of the raw price series.
+        computed from daily returns over the trading dates common to both series.
         """
-        benchmark_prices = pd.Series(self.benchmark[1].cent_prices).sort_index()
-        stock_prices = pd.Series(self.stock[1].cent_prices).sort_index()
-        benchmark_returns = benchmark_prices.pct_change().dropna()
-        stock_returns = stock_prices.pct_change().dropna()
-        aligned = pd.concat(
-            [benchmark_returns, stock_returns], axis=1, join="inner", keys=["benchmark", "stock"]
-        )
-        covariance = aligned["stock"].cov(aligned["benchmark"])
-        variance = aligned["benchmark"].var()
-        return covariance / variance
+        benchmark_prices = self.benchmark[1].cent_prices
+        stock_prices = self.stock[1].cent_prices
+        common_dates = sorted(benchmark_prices.keys() & stock_prices.keys())
+        if len(common_dates) < 2:
+            raise ValueError(
+                "Not enough overlapping trading dates between benchmark and stock to compute a beta"
+            )
+
+        benchmark_returns = [
+            benchmark_prices[curr] / benchmark_prices[prev] - 1
+            for prev, curr in itertools.pairwise(common_dates)
+        ]
+        stock_returns = [
+            stock_prices[curr] / stock_prices[prev] - 1
+            for prev, curr in itertools.pairwise(common_dates)
+        ]
+
+        benchmark_variance = statistics.variance(benchmark_returns)
+        if benchmark_variance == 0:
+            raise ValueError("Benchmark returns have zero variance; beta is undefined")
+
+        return statistics.covariance(stock_returns, benchmark_returns) / benchmark_variance
 
     @staticmethod
     def generate(benchmark_id:str, company_id:str, period:Period) -> "ChartData":

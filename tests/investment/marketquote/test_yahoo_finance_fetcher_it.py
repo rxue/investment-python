@@ -1,11 +1,11 @@
-"""Integration tests for ``yahoo_finance_fetcher.fetch_fundamental_metrics``.
+"""Integration tests for ``_yahoo_finance_fetcher.fetch_fundamental_metrics``.
 
 These hit the real Yahoo Finance API over the network (no mocking) - hence
 "IT" rather than a unit test.
 """
 import pytest
 
-from investment.marketquote.yahoo_finance_fetcher import fetch_fundamental_metrics
+from investment.marketquote._yahoo_finance_fetcher import fetch_fundamental_metrics
 
 pytestmark = pytest.mark.integration
 

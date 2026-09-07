@@ -5,7 +5,7 @@ from decimal import ROUND_HALF_UP, Decimal
 from types import MappingProxyType
 from typing import Any, Final
 
-from investment.marketquote import yahoo_finance_fetcher
+from investment.marketquote import _yahoo_finance_fetcher as yahoo_finance_fetcher
 from investment.marketquote._fx_rate_fetcher import fetch_fx_rate_from_euro
 from investment.marketquote._fx_rate_fetcher import (
     fetch_fx_rate_series_from_euro as _fetch_fx_rate_series_from_euro,
@@ -29,7 +29,7 @@ def fetch_price(symbol: str, target_date: date | None = None) -> Price:
             currency=currency,
             timestamp=datetime.fromtimestamp(epoch_seconds, tz=timezone.utc),
         )
-    last_close, currency, timestamp = yahoo_finance_fetcher.fetcher_close_price(symbol, target_date)
+    last_close, currency, timestamp = yahoo_finance_fetcher.fetch_close_price(symbol, target_date)
     cent_value = int((Decimal(str(last_close)) * 100).to_integral_value(rounding=ROUND_HALF_UP))
     return Price(
         cent_value=cent_value,
