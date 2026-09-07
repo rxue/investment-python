@@ -4,7 +4,6 @@ from datetime import date
 from typing import NamedTuple
 
 from investment.marketquote.repository import fetch_fx_rate_series, fetch_historical_prices
-from investment.util.util import EUR
 from investment.vo.value_objects import Period, PriceSeries
 
 
