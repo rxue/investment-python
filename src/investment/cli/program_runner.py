@@ -3,6 +3,7 @@
 import logging
 import time
 from datetime import date
+from decimal import Decimal
 
 import matplotlib.pyplot as plt
 import numpy
@@ -32,8 +33,8 @@ def _run_metrics(
         for entry in price_ranges_str.split(","):
             company_id, start, end = entry.split(":")
             result[company_id] = Range(
-                start=float(start) if start else None,
-                end=float(end) if end else None,
+                start=Decimal(start) if start else None,
+                end=Decimal(end) if end else None,
             )
         return result
 

@@ -50,13 +50,13 @@ def test_calculate_twr_with_two_buy_transactions():
 
     first_snapshot = snapshots[0]
     assert first_snapshot.date == first_trade_date
-    assert first_snapshot.cash_in_cent == -25000
+    assert first_snapshot.cash_balance_in_cent == -25000
     first_holding = first_snapshot.holdings.holding_by_security["PFE"]
     assert first_holding.position == 10
 
     last_snapshot = snapshots[-1]
     assert last_snapshot.date == end_date
-    assert last_snapshot.cash_in_cent == -75000
+    assert last_snapshot.cash_balance_in_cent == -75000
 
     last_holding = last_snapshot.holdings.holding_by_security["PFE"]
     assert last_holding.position == 30
@@ -64,5 +64,5 @@ def test_calculate_twr_with_two_buy_transactions():
     assert last_holding.price_in_cent > 0
 
     assert last_snapshot.value_in_cent() == (
-        last_snapshot.cash_in_cent + last_holding.market_value_in_cent()
+        last_snapshot.cash_balance_in_cent + last_holding.market_value_in_cent()
     )

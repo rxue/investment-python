@@ -50,7 +50,7 @@ class _PortfolioSnapshotSeriesGenerator:
         # date
         _date:Final[date] = daily_transactions[-1].date
         # calculate remaining cash in cent
-        remaining_cash_in_cent:int = previous_snapshot.cash_in_cent
+        remaining_cash_in_cent:int = previous_snapshot.cash_balance_in_cent
         for transaction in daily_transactions:
             remaining_cash_in_cent += transaction.cent_value()
         # calculate holdings
@@ -92,7 +92,7 @@ class _PortfolioSnapshotSeriesGenerator:
             holding_by_security = previous_snapshot.holdings.holding_by_security
             holdings_with_price = self._reprice_holdings(holding_by_security, _date)
             return PortfolioSnapshot(
-                _date, previous_snapshot.cash_in_cent, Holdings(holdings_with_price), []
+                _date, previous_snapshot.cash_balance_in_cent, Holdings(holdings_with_price), []
             )
 
         complete_snapshots: dict[date,PortfolioSnapshot] = {}
@@ -151,7 +151,7 @@ def calculate_twr(
         previous_value = snapshots[previous_date].value_in_cent()
         current_snapshot = snapshots[current_date]
         current_value = current_snapshot.value_in_cent()
-        cash_flow = current_snapshot.external_cash_flow_value_in_cent()
+        cash_flow = current_snapshot.total_external_cash_flow_in_cent()
         daily_return = (
             0.0 if previous_value == 0
             else (current_value - cash_flow) / previous_value - 1

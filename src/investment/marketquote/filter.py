@@ -1,13 +1,14 @@
 import math
+from decimal import Decimal
 from typing import NamedTuple
 
 from investment.marketquote.metrics import Metric, MetricsRecord
 
 
 class Range(NamedTuple):
-    start: float | None
-    end: float | None
-    def has(self, value:float) -> bool:
+    start: Decimal | None
+    end: Decimal | None
+    def has(self, value:float | Decimal) -> bool:
         start = self.start if self.start else 0
         end = self.end if self.end else math.inf
         return start <= value <= end

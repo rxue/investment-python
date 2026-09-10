@@ -23,14 +23,19 @@ class Holdings:
 
 class PortfolioSnapshot(NamedTuple):
     date:date
-    cash_in_cent:int
+    # Running cash balance as of `date` - carried forward and adjusted from
+    # the previous snapshot, not reset per day.
+    cash_balance_in_cent:int
     holdings:Holdings
+    # External cash-flow transaction amounts (deposits, non-investment
+    # expenses) that occurred on the `date` only - NOT cumulative; reset to []
+    # for every snapshot, including carried-forward no-transaction days.
     external_cash_flows:list[int]
     def value_in_cent(self) -> int:
         holdings = self.holdings.holding_by_security.values()
         holdings_value = sum(h.market_value_in_cent() for h in holdings)
-        return self.cash_in_cent + holdings_value
-    def external_cash_flow_value_in_cent(self) -> int:
+        return self.cash_balance_in_cent + holdings_value
+    def total_external_cash_flow_in_cent(self) -> int:
         return sum(self.external_cash_flows)
 
 
