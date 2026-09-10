@@ -8,7 +8,7 @@ from investment.marketquote.metrics import Metric, MetricsRecord
 class Range(NamedTuple):
     start: Decimal | None
     end: Decimal | None
-    def has(self, value:float | Decimal) -> bool:
+    def has(self, value: Decimal) -> bool:
         start = self.start if self.start else 0
         end = self.end if self.end else math.inf
         return start <= value <= end
