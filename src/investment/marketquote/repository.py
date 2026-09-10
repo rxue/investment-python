@@ -14,7 +14,7 @@ from investment.marketquote.metrics import Metric, MetricsRecord
 from investment.util.util import EUR, convert_to_euro_cent
 from investment.vo.value_objects import FxRateSeries, Percentage, Period, Price, PriceSeries
 
-
+_fx_rate_series_from_euro_cache:dict[str,FxRateSeries] = dict()
 def fetch_price(symbol: str, target_date: date | None = None) -> Price:
     """Fetch the price for ``symbol``.
 

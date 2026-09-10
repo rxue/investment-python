@@ -38,4 +38,8 @@ class PortfolioSnapshot(NamedTuple):
     def total_external_cash_flow_in_cent(self) -> int:
         return sum(self.external_cash_flows)
 
+class PortfolioSnapshotSeries(NamedTuple):
+    currency:str
+    snapshots:list[PortfolioSnapshot]
+
 

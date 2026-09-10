@@ -69,19 +69,6 @@ class ChartData(NamedTuple):
     @staticmethod
     def generate(benchmark_id:str, company_id:str, period:Period) -> "ChartData":
         benchmark_price_series:PriceSeries = fetch_historical_prices(benchmark_id, period)
-        stock_price_series:PriceSeries = fetch_historical_prices(company_id, period)
-        benchmark_currency = benchmark_price_series.currency
-        stock_currency = stock_price_series.currency
-        if benchmark_currency != stock_currency:
-            # Convert the stock's prices into the benchmark's currency, day by day,
-            # so _to_index()/coefficient() compare like-for-like instead of mixing
-            # in uncontrolled FX drift between the two currencies.
-            fx_rates = fetch_fx_rate_series(stock_currency, benchmark_currency, period)
-            stock_price_series = PriceSeries(
-                currency=benchmark_currency,
-                cent_prices={
-                    trading_date: round(cent_value * fx_rates.get(trading_date))
-                    for trading_date, cent_value in stock_price_series.cent_prices.items()
-                },
-            )
+        stock_price_series: PriceSeries = fetch_historical_prices(company_id, period, currency=(
+            benchmark_price_series.currency))
         return ChartData((benchmark_id, benchmark_price_series), (company_id, stock_price_series))

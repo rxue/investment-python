@@ -5,6 +5,7 @@ from typing import Final, NamedTuple
 from investment.portfolio.transaction import Action, Deposit, Trade, Transaction
 from investment.portfolio.twr._market_price_repository import MarketPriceRepository
 from investment.portfolio.twr.portfolio import Holding, Holdings, PortfolioSnapshot
+from investment.util.util import EUR
 from investment.vo.value_objects import Period
 
 
@@ -16,9 +17,15 @@ class DailyReturnSeries(NamedTuple):
     series: list[DailyReturn]
 
 class _PortfolioSnapshotSeriesGenerator:
-    def __init__(self, transactions:list[Transaction]) -> None:
+    def __init__(self, transactions:list[Transaction], reporting_currency:str=EUR) -> None:
         self.transactions = transactions
+        self.reporting_currency = reporting_currency
         self.market_price_repository = MarketPriceRepository(self._get_end_date())
+        self.reporting_currency:str = reporting_currency
+    def _get_end_date(self) -> date:
+        last_date = self.transactions[-1].date
+        last_day_of_month = calendar.monthrange(last_date.year, last_date.month)[1]
+        return last_date.replace(day=last_day_of_month)
     def generate(self) -> dict[date,PortfolioSnapshot]:
         # Assumes transactions is already sorted by date ascendingly: the last
         # element is taken as the end date, and snapshots are chained in the
@@ -38,11 +45,6 @@ class _PortfolioSnapshotSeriesGenerator:
             snapshot = self._new_snapshot(daily_transactions, previous_portfolio_snapshot)
             previous_portfolio_snapshot = portfolio_snapshots[_date] = snapshot
         return self._add_missing_snapshots(portfolio_snapshots)
-
-    def _get_end_date(self) -> date:
-        last_date = self.transactions[-1].date
-        last_day_of_month = calendar.monthrange(last_date.year, last_date.month)[1]
-        return last_date.replace(day=last_day_of_month)
 
     def _new_snapshot(
         self, daily_transactions:list[Transaction], previous_snapshot:PortfolioSnapshot
@@ -113,14 +115,13 @@ class _PortfolioSnapshotSeriesGenerator:
         return {
             security_id: Holding(
                 holding.position,
-                self.market_price_repository.find_euro_price(security_id, _date).cent_value,
+                self.market_price_repository.find_price(security_id, _date, currency=self.reporting_currency).cent_value,
             )
             for security_id, holding in holding_by_security.items()
         }
 
 def calculate_twr(
-    transactions: list[Transaction],
-) -> tuple[list[PortfolioSnapshot], list[DailyReturn]]:
+    transactions: list[Transaction], reporting_currency:str=EUR) -> tuple[list[PortfolioSnapshot], list[DailyReturn]]:
     """Compute a daily-linked time-weighted return series from a portfolio's
     transaction history.
 
@@ -142,7 +143,7 @@ def calculate_twr(
       no prior snapshot to compare against.
     """
     # Step 1: form the map from date to portfolio snapshot for each day
-    snapshots = _PortfolioSnapshotSeriesGenerator(transactions).generate()
+    snapshots = _PortfolioSnapshotSeriesGenerator(transactions, reporting_currency).generate()
     dates = list(snapshots)
 
     # Step 2: chain daily returns, each day's cashflow-adjusted change over the previous day
