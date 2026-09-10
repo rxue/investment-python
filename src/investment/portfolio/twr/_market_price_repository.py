@@ -1,11 +1,7 @@
-from datetime import date, datetime
-from typing import Final
+from datetime import date
 
-from investment.marketquote.repository import (
-    fetch_fx_rate_series_from_euro,
-    fetch_historical_prices,
-)
-from investment.util.util import EUR, convert_to_euro_cent
+from investment.marketquote.repository import fetch_historical_prices
+from investment.util.util import EUR
 from investment.vo.value_objects import FxRateSeries, Period, Price, PriceSeries
 
 _fx_rate_series_cache:dict[str,FxRateSeries] = dict()
