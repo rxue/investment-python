@@ -115,13 +115,16 @@ class _PortfolioSnapshotSeriesGenerator:
         return {
             security_id: Holding(
                 holding.position,
-                self.market_price_repository.find_price(security_id, _date, currency=self.reporting_currency).cent_value,
+                self.market_price_repository.find_price(
+                    security_id, _date, currency=self.reporting_currency
+                ).cent_value,
             )
             for security_id, holding in holding_by_security.items()
         }
 
 def calculate_twr(
-    transactions: list[Transaction], reporting_currency:str=EUR) -> tuple[list[PortfolioSnapshot], list[DailyReturn]]:
+    transactions: list[Transaction], reporting_currency:str=EUR
+) -> tuple[list[PortfolioSnapshot], list[DailyReturn]]:
     """Compute a daily-linked time-weighted return series from a portfolio's
     transaction history.
 
