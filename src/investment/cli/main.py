@@ -146,16 +146,16 @@ def main(argv: Sequence[str] | None = None) -> None:
             start_date=args.start_date,
             end_date=args.end_date,
         )
-        benchmark_id, benchmark_index = chart_data.benchmark_index()
-        security_id,stock_index = chart_data.stock_index()
+        benchmark_index = chart_data.benchmark_index()
+        stock_index = chart_data.stock_index()
         print(
-            f"Coefficient ({security_id} vs {benchmark_id}): "
+            f"Coefficient ({stock_index.label} vs {benchmark_index.label}): "
             f"{chart_data.coefficient():.4f}"
         )
         output_path = None
         if args.graph_directory:
             output_path = os.path.join(
-                args.graph_directory, f"{security_id}_vs_{benchmark_id}.png"
+                args.graph_directory, f"{stock_index.label}_vs_{benchmark_index.label}.png"
             )
         chart_path = _generate_benchmark_chart(chart_data, output_path=output_path)
         if chart_path is not None:

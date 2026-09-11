@@ -57,6 +57,7 @@ class PriceSeries(NamedTuple):
         )
 
 class IndexSeries(NamedTuple):
+    label: str
     value_by_date: dict[date, float]
     def dates(self):
         return self.value_by_date.keys()

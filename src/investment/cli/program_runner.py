@@ -127,23 +127,23 @@ def _generate_benchmark_chart(
     Displays the chart in a window by default (``show=True``). Saved to
     ``output_path`` only if given; returns that path, or ``None`` if not saved.
     """
-    benchmark_id, benchmark_index = chart_data.benchmark_index()
-    security_id, stock_index = chart_data.stock_index()
+    benchmark_index = chart_data.benchmark_index()
+    stock_index = chart_data.stock_index()
 
     fig, ax = plt.subplots()
     ax.plot(
         numpy.array(list(benchmark_index.dates())),
         numpy.array(list(benchmark_index.index_values())),
-        label=benchmark_id,
+        label=benchmark_index.label,
     )
     ax.plot(
         numpy.array(list(stock_index.dates())),
         numpy.array(list(stock_index.index_values())),
-        label=security_id,
+        label=stock_index.label,
     )
     ax.axhline(chart_data.base, color="gray", linestyle="--", linewidth=0.8)
     ax.set_title(
-        f"{security_id} vs {benchmark_id} — indexed to {chart_data.base:.0f}"
+        f"{stock_index.label} vs {benchmark_index.label} — indexed to {chart_data.base:.0f}"
     )
     ax.set_ylabel("Index value")
     ax.legend()

@@ -17,17 +17,17 @@ class ChartData(NamedTuple):
         first_price:int = next(iter(price_series.cent_prices.values()))
         return {date:price/first_price*100 for date,price in price_series.cent_prices.items()}
 
-    def benchmark_index(self) -> tuple[str,IndexSeries]:
+    def benchmark_index(self) -> IndexSeries:
         """Return the benchmark's price series rebased to ``base`` at its first date."""
         benchmark_id = self.benchmark[0]
         price_series = self.benchmark[1]
-        return benchmark_id,IndexSeries(self._to_index(price_series))
+        return IndexSeries(benchmark_id, self._to_index(price_series))
 
-    def stock_index(self) -> tuple[str,IndexSeries]:
+    def stock_index(self) -> IndexSeries:
         """Return the stock's price series rebased to ``base`` at its first date."""
         security_id = self.stock[0]
         price_series = self.stock[1]
-        return security_id, IndexSeries(self._to_index(price_series))
+        return IndexSeries(security_id, self._to_index(price_series))
 
     def coefficient(self)->float:
         """Return the stock's beta relative to the benchmark over the period.
