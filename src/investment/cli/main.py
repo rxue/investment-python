@@ -26,6 +26,11 @@ def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="investment", description="Fetch market quotes and fundamentals."
     )
+    parser.add_argument(
+        "--verbose",
+        action="store_true",
+        help="Print log messages (INFO and above) to stdout. Suppressed by default.",
+    )
     subparsers = parser.add_subparsers(dest="command", required=True)
     def _build_metrics_parser() -> None:
         metrics_parser = subparsers.add_parser(
@@ -93,13 +98,16 @@ def _build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: Sequence[str] | None = None) -> None:
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s %(levelname)s %(name)s.%(funcName)s: %(message)s",
-        stream=sys.stdout,
-    )
     parser = _build_parser()
     args = parser.parse_args(argv)
+    if args.verbose:
+        logging.basicConfig(
+            level=logging.INFO,
+            format="%(asctime)s %(levelname)s %(name)s.%(funcName)s: %(message)s",
+            stream=sys.stdout,
+        )
+    else:
+        logging.disable(logging.CRITICAL)
     if args.command == Command.METRICS:
         metrics, erratic_company_ids, metrics_records_out_of_range = _run_metrics(
             names=args.metric_names,
