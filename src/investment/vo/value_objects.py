@@ -55,3 +55,10 @@ class PriceSeries(NamedTuple):
             currency=self.currency,
             timestamp=datetime.combine(search_date, datetime.min.time()),
         )
+
+class IndexSeries(NamedTuple):
+    value_by_date: dict[date, float]
+    def dates(self):
+        return self.value_by_date.keys()
+    def index_values(self):
+        return self.value_by_date.values()

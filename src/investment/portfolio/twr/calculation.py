@@ -5,6 +5,7 @@ from typing import Final, NamedTuple
 from investment.portfolio.transaction import Action, Deposit, Trade, Transaction
 from investment.portfolio.twr._market_price_repository import MarketPriceRepository
 from investment.portfolio.twr.portfolio import Holding, Holdings, PortfolioSnapshot
+from investment.returns.returns import ReturnSeries
 from investment.util.util import EUR
 from investment.vo.value_objects import Period
 
@@ -12,9 +13,6 @@ from investment.vo.value_objects import Period
 class DailyReturn(NamedTuple):
     date: date
     value: float
-
-class DailyReturnSeries(NamedTuple):
-    series: list[DailyReturn]
 
 class _PortfolioSnapshotSeriesGenerator:
     def __init__(self, transactions:list[Transaction], reporting_currency:str=EUR) -> None:
@@ -124,7 +122,7 @@ class _PortfolioSnapshotSeriesGenerator:
 
 def calculate_twr(
     transactions: list[Transaction], reporting_currency:str=EUR
-) -> tuple[list[PortfolioSnapshot], list[DailyReturn]]:
+) -> tuple[list[PortfolioSnapshot], ReturnSeries]:
     """Compute a daily-linked time-weighted return series from a portfolio's
     transaction history.
 
@@ -150,7 +148,7 @@ def calculate_twr(
     dates = list(snapshots)
 
     # Step 2: chain daily returns, each day's cashflow-adjusted change over the previous day
-    daily_returns: list[DailyReturn] = []
+    daily_returns: dict[date,float] = dict()
     for previous_date, current_date in zip(dates, dates[1:]):
         previous_value = snapshots[previous_date].value_in_cent()
         current_snapshot = snapshots[current_date]
@@ -160,7 +158,7 @@ def calculate_twr(
             0.0 if previous_value == 0
             else (current_value - cash_flow) / previous_value - 1
         )
-        daily_returns.append(DailyReturn(current_date, daily_return))
+        daily_returns[current_date] = daily_return
 
-    return [snapshots[d] for d in dates], daily_returns
+    return [snapshots[d] for d in dates], ReturnSeries(daily_returns)
 

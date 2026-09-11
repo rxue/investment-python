@@ -4,16 +4,8 @@ from datetime import date
 from typing import NamedTuple
 
 from investment.marketquote.repository import fetch_historical_prices
-from investment.vo.value_objects import Period, PriceSeries
+from investment.vo.value_objects import IndexSeries, Period, PriceSeries
 
-
-class LabeledIndexSeries(NamedTuple):
-    symbol: str
-    index_series: dict[date, float]
-    def dates(self):
-        return self.index_series.keys()
-    def index_values(self):
-        return self.index_series.values()
 
 class ChartData(NamedTuple):
     benchmark: tuple[str,PriceSeries]
@@ -25,17 +17,17 @@ class ChartData(NamedTuple):
         first_price:int = next(iter(price_series.cent_prices.values()))
         return {date:price/first_price*100 for date,price in price_series.cent_prices.items()}
 
-    def benchmark_index(self) -> LabeledIndexSeries:
+    def benchmark_index(self) -> tuple[str,IndexSeries]:
         """Return the benchmark's price series rebased to ``base`` at its first date."""
         benchmark_id = self.benchmark[0]
         price_series = self.benchmark[1]
-        return LabeledIndexSeries(benchmark_id, self._to_index(price_series))
+        return benchmark_id,IndexSeries(self._to_index(price_series))
 
-    def stock_index(self) -> LabeledIndexSeries:
+    def stock_index(self) -> tuple[str,IndexSeries]:
         """Return the stock's price series rebased to ``base`` at its first date."""
-        company_id = self.stock[0]
+        security_id = self.stock[0]
         price_series = self.stock[1]
-        return LabeledIndexSeries(company_id, self._to_index(price_series))
+        return security_id, IndexSeries(self._to_index(price_series))
 
     def coefficient(self)->float:
         """Return the stock's beta relative to the benchmark over the period.
