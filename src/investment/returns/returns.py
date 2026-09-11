@@ -4,7 +4,7 @@ from typing import NamedTuple
 from investment.vo.value_objects import IndexSeries
 
 
-class ReturnSeries(NamedTuple):
+class DailyReturnSeries(NamedTuple):
     value_by_date:dict[date,float]
     def to_index_series(self, base:float=100) -> IndexSeries:
         """Compound this series' daily returns into a rebased index series.

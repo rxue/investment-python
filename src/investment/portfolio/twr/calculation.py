@@ -5,7 +5,7 @@ from typing import Final, NamedTuple
 from investment.portfolio.transaction import Action, Deposit, Trade, Transaction
 from investment.portfolio.twr._market_price_repository import MarketPriceRepository
 from investment.portfolio.twr.portfolio import Holding, Holdings, PortfolioSnapshot
-from investment.returns.returns import ReturnSeries
+from investment.returns.returns import DailyReturnSeries
 from investment.util.util import EUR
 from investment.vo.value_objects import Period
 
@@ -122,7 +122,7 @@ class _PortfolioSnapshotSeriesGenerator:
 
 def calculate_twr(
     transactions: list[Transaction], reporting_currency:str=EUR
-) -> tuple[list[PortfolioSnapshot], ReturnSeries]:
+) -> tuple[list[PortfolioSnapshot], DailyReturnSeries]:
     """Compute a daily-linked time-weighted return series from a portfolio's
     transaction history.
 
@@ -160,5 +160,5 @@ def calculate_twr(
         )
         daily_returns[current_date] = daily_return
 
-    return [snapshots[d] for d in dates], ReturnSeries(daily_returns)
+    return [snapshots[d] for d in dates], DailyReturnSeries(daily_returns)
 
