@@ -7,7 +7,7 @@ class Holding(NamedTuple):
     position:int
     price_in_cent:int | None = None
     def market_value_in_cent(self) -> int:
-        return self.position * (self.price_in_cent or 0)
+        return self.position * self.price_in_cent
 
 @dataclass
 class Holdings:

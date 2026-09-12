@@ -1,7 +1,7 @@
 from datetime import date, timedelta
 from typing import Final, NamedTuple
 
-from investment.portfolio.transaction import Action, Deposit, Trade, Transaction, get_period
+from investment.portfolio.transaction import Action, Deposit, Trade, Transaction, get_period, NonInvestmentExpense
 from investment.portfolio.twr._market_price_repository import MarketPriceRepository
 from investment.portfolio.twr.portfolio import Holding, Holdings, PortfolioSnapshot
 from investment.returns.returns import DailyReturnSeries
@@ -12,13 +12,61 @@ class DailyReturn(NamedTuple):
     date: date
     value: float
 
+class _HoldingsPricer:
+    def __init__(self, market_price_repository:MarketPriceRepository, reporting_currency:str=EUR) -> None:
+        self.market_price_repository = market_price_repository
+        self.reporting_currency = reporting_currency
+    def price(
+        self, holding_by_security:dict[str,Holding], _date:date
+    ) -> dict[str,Holding]:
+        return {
+            security_id: Holding(
+                holding.position,
+                self.market_price_repository.find_price(
+                    security_id, _date, currency=self.reporting_currency
+                ).cent_value,
+            )
+            for security_id, holding in holding_by_security.items()
+        }
+
+class _PortfolioSnapshotGenerator:
+    def __init__(self, pricer:_HoldingsPricer) -> None:
+        self.pricer = pricer
+    def generate(self, transactions:list[Transaction], previous_snapshot:PortfolioSnapshot) -> PortfolioSnapshot:
+        # date
+        last_date:Final[date] = transactions[-1].date
+        # calculate remaining cash in cent
+        remaining_cash_in_cent:int = previous_snapshot.cash_balance_in_cent
+        for transaction in transactions:
+            remaining_cash_in_cent += transaction.cent_value()
+        # calculate holdings
+        holdings = Holdings(previous_snapshot.holdings.holding_by_security.copy())
+        for transaction in transactions:
+            if isinstance(transaction, Trade):
+                trade = transaction
+                if trade.action == Action.BUY:
+                    holdings.add(trade.security_id, trade.share_amount)
+                elif trade.action == Action.SELL:
+                    holdings.remove(trade.security_id, trade.share_amount)
+        ## add price to holdings
+        holdings_with_price = self.pricer.price(holdings.holding_by_security, last_date)
+        # calculate external cash flow
+        external_cash_flows = [
+            transaction.cent_value()
+            for transaction in transactions
+            if isinstance(transaction, (Deposit, NonInvestmentExpense))
+        ]
+        return PortfolioSnapshot(
+            last_date, remaining_cash_in_cent, Holdings(holdings_with_price), external_cash_flows
+        )
+
 class _PortfolioSnapshotSeriesGenerator:
     def __init__(self, transactions:list[Transaction], reporting_currency:str=EUR) -> None:
         self.transactions = transactions
-        self.reporting_currency = reporting_currency
         self.period = get_period(transactions)
-        self.market_price_repository = MarketPriceRepository(self.period.to_date)
-        self.reporting_currency:str = reporting_currency
+        market_price_repository = MarketPriceRepository(self.period.to_date)
+        self.pricer = _HoldingsPricer(market_price_repository, reporting_currency)
+        self.snapshot_generator = _PortfolioSnapshotGenerator(self.pricer)
     def generate(self) -> dict[date,PortfolioSnapshot]:
         # Assumes transactions is already sorted by date ascendingly: the last
         # element is taken as the end date, and snapshots are chained in the
@@ -34,39 +82,9 @@ class _PortfolioSnapshotSeriesGenerator:
         previous_portfolio_snapshot = PortfolioSnapshot(self.period.from_date, 0, Holdings({}), [])
         portfolio_snapshots:dict[date,PortfolioSnapshot] = {}
         for _date, daily_transactions in transactions_by_date.items():
-            snapshot = self._new_snapshot(daily_transactions, previous_portfolio_snapshot)
+            snapshot = self.snapshot_generator.generate(daily_transactions, previous_portfolio_snapshot)
             previous_portfolio_snapshot = portfolio_snapshots[_date] = snapshot
         return self._add_missing_snapshots(portfolio_snapshots)
-
-    def _new_snapshot(
-        self, daily_transactions:list[Transaction], previous_snapshot:PortfolioSnapshot
-    ) -> PortfolioSnapshot:
-        # date
-        _date:Final[date] = daily_transactions[-1].date
-        # calculate remaining cash in cent
-        remaining_cash_in_cent:int = previous_snapshot.cash_balance_in_cent
-        for transaction in daily_transactions:
-            remaining_cash_in_cent += transaction.cent_value()
-        # calculate holdings
-        holdings = Holdings(previous_snapshot.holdings.holding_by_security.copy())
-        for transaction in daily_transactions:
-            if isinstance(transaction, Trade):
-                trade = transaction
-                if trade.action == Action.BUY:
-                    holdings.add(trade.security_id, trade.share_amount)
-                elif trade.action == Action.SELL:
-                    holdings.remove(trade.security_id, trade.share_amount)
-        ## add price to holdings
-        holdings_with_price = self._reprice_holdings(holdings.holding_by_security, _date)
-        # calculate external cash flow
-        external_cash_flows = [
-            transaction.cent_value()
-            for transaction in daily_transactions
-            if isinstance(transaction, Deposit)
-        ]
-        return PortfolioSnapshot(
-            _date, remaining_cash_in_cent, Holdings(holdings_with_price), external_cash_flows
-        )
 
     def _add_missing_snapshots(
         self, existing_snapshots:dict[date,PortfolioSnapshot]
@@ -82,7 +100,7 @@ class _PortfolioSnapshotSeriesGenerator:
             previous day's cash and holdings forward, re-pricing the holdings
             for ``_date`` (positions are unchanged, but market value isn't)."""
             holding_by_security = previous_snapshot.holdings.holding_by_security
-            holdings_with_price = self._reprice_holdings(holding_by_security, _date)
+            holdings_with_price = self.pricer.price(holding_by_security, _date)
             return PortfolioSnapshot(
                 _date, previous_snapshot.cash_balance_in_cent, Holdings(holdings_with_price), []
             )
@@ -98,19 +116,6 @@ class _PortfolioSnapshotSeriesGenerator:
             complete_snapshots[current_date] = previous_snapshot
             current_date += timedelta(days=1)
         return complete_snapshots
-
-    def _reprice_holdings(
-        self, holding_by_security:dict[str,Holding], _date:date
-    ) -> dict[str,Holding]:
-        return {
-            security_id: Holding(
-                holding.position,
-                self.market_price_repository.find_price(
-                    security_id, _date, currency=self.reporting_currency
-                ).cent_value,
-            )
-            for security_id, holding in holding_by_security.items()
-        }
 
 def calculate_twr(
     transactions: list[Transaction], reporting_currency:str=EUR
