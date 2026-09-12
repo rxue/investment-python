@@ -159,3 +159,8 @@ def calculate_twr(
 
     return [snapshots[d] for d in dates], DailyReturnSeries(daily_returns)
 
+def calculate_cumulate_returns(
+    transactions: list[Transaction], reporting_currency:str=EUR
+) -> dict[date,float]:
+    _,daily_returns = calculate_twr(transactions, reporting_currency)
+    return daily_returns.cumulate_returns()
