@@ -149,8 +149,8 @@ def main(argv: Sequence[str] | None = None) -> None:
         benchmark_series = benchmark_result.benchmark_series
         subject_series = benchmark_result.subject_series
         print(
-            f"Coefficient ({subject_series.label} vs {benchmark_series.label}): "
-            f"{benchmark_result.coefficient():.4f}"
+            f"Correlation coefficient ({subject_series.label} vs {benchmark_series.label}): "
+            f"{benchmark_result.correlation_coefficient():.4f}"
         )
         output_path = None
         if args.graph_directory:

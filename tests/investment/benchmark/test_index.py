@@ -3,11 +3,11 @@ from datetime import date
 from typing import Final
 from unittest.mock import patch
 
-from investment.benchmark.index import _get_index_series
+from investment.benchmark._index import _get_index_series
 from investment.vo.value_objects import Period, PriceSeries
 
 
-@patch("investment.benchmark.index.fetch_historical_prices")
+@patch("investment.benchmark._index.py.fetch_historical_prices")
 def test_get_index_series_converts_to_given_currency(mock_fetch_historical_prices):
     """``_get_index_series`` should pass ``currency`` straight through to
     ``fetch_historical_prices`` and rebase whatever price series comes back
@@ -29,7 +29,7 @@ def test_get_index_series_converts_to_given_currency(mock_fetch_historical_price
     mock_fetch_historical_prices.assert_called_once_with("AAPL", period, currency="DKK")
     assert currency == "DKK"
 
-@patch("investment.benchmark.index.fetch_historical_prices")
+@patch("investment.benchmark._index.py.fetch_historical_prices")
 def test_get_index_series_with_original_currency(mock_fetch_historical_prices):
     """``_get_index_series`` should pass ``currency`` straight through to
     ``fetch_historical_prices`` and rebase whatever price series comes back
