@@ -1,7 +1,14 @@
 from datetime import date, timedelta
 from typing import Final, NamedTuple
 
-from investment.portfolio.transaction import Action, Deposit, Trade, Transaction, get_period, NonInvestmentExpense
+from investment.portfolio.transaction import (
+    Action,
+    Deposit,
+    NonInvestmentExpense,
+    Trade,
+    Transaction,
+    get_period,
+)
 from investment.portfolio.twr._market_price_repository import MarketPriceRepository
 from investment.portfolio.twr.portfolio import Holding, Holdings, PortfolioSnapshot
 from investment.returns.returns import DailyReturnSeries
@@ -13,7 +20,9 @@ class DailyReturn(NamedTuple):
     value: float
 
 class _HoldingsPricer:
-    def __init__(self, market_price_repository:MarketPriceRepository, reporting_currency:str=EUR) -> None:
+    def __init__(
+        self, market_price_repository:MarketPriceRepository, reporting_currency:str=EUR
+    ) -> None:
         self.market_price_repository = market_price_repository
         self.reporting_currency = reporting_currency
     def price(
@@ -32,7 +41,9 @@ class _HoldingsPricer:
 class _PortfolioSnapshotGenerator:
     def __init__(self, pricer:_HoldingsPricer) -> None:
         self.pricer = pricer
-    def generate(self, transactions:list[Transaction], previous_snapshot:PortfolioSnapshot) -> PortfolioSnapshot:
+    def generate(
+        self, transactions:list[Transaction], previous_snapshot:PortfolioSnapshot
+    ) -> PortfolioSnapshot:
         # date
         last_date:Final[date] = transactions[-1].date
         # calculate remaining cash in cent
@@ -82,7 +93,9 @@ class _PortfolioSnapshotSeriesGenerator:
         previous_portfolio_snapshot = PortfolioSnapshot(self.period.from_date, 0, Holdings({}), [])
         portfolio_snapshots:dict[date,PortfolioSnapshot] = {}
         for _date, daily_transactions in transactions_by_date.items():
-            snapshot = self.snapshot_generator.generate(daily_transactions, previous_portfolio_snapshot)
+            snapshot = self.snapshot_generator.generate(
+                daily_transactions, previous_portfolio_snapshot
+            )
             previous_portfolio_snapshot = portfolio_snapshots[_date] = snapshot
         return self._add_missing_snapshots(portfolio_snapshots)
 

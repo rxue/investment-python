@@ -7,6 +7,8 @@ class Holding(NamedTuple):
     position:int
     price_in_cent:int | None = None
     def market_value_in_cent(self) -> int:
+        if self.price_in_cent is None:
+            raise ValueError("market_value_in_cent() requires a priced Holding")
         return self.position * self.price_in_cent
 
 @dataclass
