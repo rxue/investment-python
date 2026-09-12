@@ -1,7 +1,10 @@
+import calendar
 from datetime import date
 from decimal import ROUND_HALF_UP, Decimal
 from enum import Enum, auto
 from typing import NamedTuple, Protocol
+
+from investment.vo.value_objects import Period
 
 
 def _money_to_cent_value(money: Decimal) -> int:
@@ -75,3 +78,9 @@ class NonInvestmentExpense(NamedTuple):
         return True
     def type(self):
         return ExpenseType.NON_INVESTMENT
+
+def get_period(transactions:list[Transaction]) -> Period:
+    start_date = transactions[0].date
+    last_date = transactions[-1].date
+    last_day_of_month = calendar.monthrange(last_date.year, last_date.month)[1]
+    return Period(start_date,last_date.replace(day=last_day_of_month))

@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 import numpy
 import pandas as pd
 
-from investment.benchmark.chart_data import ChartData
+from investment.benchmark.benchmark import BenchmarkResult
 from investment.marketquote import metrics, repository
 from investment.marketquote.filter import Range, records_out_of_range
 from investment.util.decorator import clock
@@ -115,35 +115,36 @@ def _run_metrics(
         records_out_of_range_df,
     )
 
-def _run_benchmark(benchmark_id:str,company_id:str,start_date:str,end_date:str) -> ChartData:
+def _run_benchmark(benchmark_id:str,company_id:str,start_date:str,end_date:str) -> BenchmarkResult:
     period = Period(from_date=date.fromisoformat(start_date), to_date=date.fromisoformat(end_date))
-    return ChartData.generate(benchmark_id, company_id, period)
+    return BenchmarkResult.benchmark_security(benchmark_id, company_id, period)
 
 def _generate_benchmark_chart(
-    chart_data:ChartData, output_path:str|None=None, show:bool=True
+    benchmark_result:BenchmarkResult, output_path:str|None=None, show:bool=True
 ) -> str|None:
-    """Plot the benchmark's and stock's rebased index series.
+    """Plot the benchmark's and subject's rebased index series.
 
     Displays the chart in a window by default (``show=True``). Saved to
     ``output_path`` only if given; returns that path, or ``None`` if not saved.
     """
-    benchmark_index = chart_data.benchmark_index()
-    stock_index = chart_data.stock_index()
+    benchmark_series = benchmark_result.benchmark_series
+    subject_series = benchmark_result.subject_series
+    base = 100
 
     fig, ax = plt.subplots()
     ax.plot(
-        numpy.array(list(benchmark_index.dates())),
-        numpy.array(list(benchmark_index.index_values())),
-        label=benchmark_index.label,
+        numpy.array(list(benchmark_series.dates())),
+        numpy.array(list(benchmark_series.index_values())),
+        label=benchmark_series.label,
     )
     ax.plot(
-        numpy.array(list(stock_index.dates())),
-        numpy.array(list(stock_index.index_values())),
-        label=stock_index.label,
+        numpy.array(list(subject_series.dates())),
+        numpy.array(list(subject_series.index_values())),
+        label=subject_series.label,
     )
-    ax.axhline(chart_data.base, color="gray", linestyle="--", linewidth=0.8)
+    ax.axhline(base, color="gray", linestyle="--", linewidth=0.8)
     ax.set_title(
-        f"{stock_index.label} vs {benchmark_index.label} — indexed to {chart_data.base:.0f}"
+        f"{subject_series.label} vs {benchmark_series.label} — indexed to {base}"
     )
     ax.set_ylabel("Index value")
     ax.legend()

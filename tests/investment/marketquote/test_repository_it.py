@@ -76,19 +76,19 @@ def test_fetch_historical_prices_converts_to_eur_by_default_for_a_usd_stock():
     start = end - timedelta(days=1)
     period = Period(from_date=start, to_date=end)
 
-    price_series = fetch_historical_prices("PFE", period)
+    price_series = fetch_historical_prices("PFE", period, currency="EUR")
 
     assert price_series.currency == "EUR"
     cent_prices:Final = price_series.cent_prices
     assert cent_prices
     assert len(cent_prices) == 2
-    for trading_date, cent_price in fetch_historical_prices("PFE", period):
+    for trading_date, cent_price in fetch_historical_prices("PFE", period).cent_prices.items():
         assert start <= trading_date <= end
         assert cent_price > 0
 
     for (eur_date, eur_cent_price), (usd_date, usd_cent_price) in zip(
             cent_prices.items(),
-            fetch_historical_prices("PFE", period, currency="USD").cent_prices.items()
+            fetch_historical_prices("PFE", period).cent_prices.items()
     ):
         assert eur_date == usd_date
         assert eur_cent_price < usd_cent_price

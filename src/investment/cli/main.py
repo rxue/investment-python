@@ -140,24 +140,24 @@ def main(argv: Sequence[str] | None = None) -> None:
                 f"argument benchmark_pair: invalid format: {args.benchmark_pair!r} "
                 "(expected BENCHMARK_ID:COMPANY_ID, e.g. VOO:T)"
             )
-        chart_data = _run_benchmark(
+        benchmark_result = _run_benchmark(
             benchmark_id=benchmark_id,
             company_id=company_id,
             start_date=args.start_date,
             end_date=args.end_date,
         )
-        benchmark_index = chart_data.benchmark_index()
-        stock_index = chart_data.stock_index()
+        benchmark_series = benchmark_result.benchmark_series
+        subject_series = benchmark_result.subject_series
         print(
-            f"Coefficient ({stock_index.label} vs {benchmark_index.label}): "
-            f"{chart_data.coefficient():.4f}"
+            f"Coefficient ({subject_series.label} vs {benchmark_series.label}): "
+            f"{benchmark_result.coefficient():.4f}"
         )
         output_path = None
         if args.graph_directory:
             output_path = os.path.join(
-                args.graph_directory, f"{stock_index.label}_vs_{benchmark_index.label}.png"
+                args.graph_directory, f"{subject_series.label}_vs_{benchmark_series.label}.png"
             )
-        chart_path = _generate_benchmark_chart(chart_data, output_path=output_path)
+        chart_path = _generate_benchmark_chart(benchmark_result, output_path=output_path)
         if chart_path is not None:
             print(f"Chart saved to {chart_path}")
 

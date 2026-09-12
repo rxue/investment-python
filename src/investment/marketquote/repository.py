@@ -116,13 +116,13 @@ def fetch_current_metrics_batch(
     records_with_errors = [record for record in records if record.has_errors()]
     return records_without_errors, records_with_errors
 
-def fetch_historical_prices(company_id:str, period:Period, currency:str=EUR) -> PriceSeries:
+def fetch_historical_prices(company_id:str, period:Period, currency:str|None=None) -> PriceSeries:
     """Fetch the daily closing price series for ``company_id`` over ``period``."""
     float_prices, original_currency = yahoo_finance_fetcher.fetch_price_history(
         company_id, period.from_date, period.to_date
     )
     prices: dict[date, Decimal] = {d:Decimal(price) for d, price in float_prices.items()}
-    if original_currency != currency:
+    if currency is not None and original_currency != currency:
         fx_rate_series = fetch_fx_rate_series(original_currency,currency, period)
         prices = {date:fx_rate_series.get(date)*price for date, price in prices.items()}
 
@@ -130,7 +130,8 @@ def fetch_historical_prices(company_id:str, period:Period, currency:str=EUR) -> 
         trading_date: int((Decimal(str(price)) * 100).to_integral_value(rounding=ROUND_HALF_UP))
         for trading_date, price in prices.items()
     }
-    return PriceSeries(currency=currency, cent_prices=cent_prices)
+    result_currency = original_currency if currency is None else currency
+    return PriceSeries(currency=result_currency, cent_prices=cent_prices)
 
 def fetch_fx_rate_series_from_euro(currency:str, period:Period) -> FxRateSeries:
     """Fetch the EUR-to-``currency`` exchange rate for every day the ECB

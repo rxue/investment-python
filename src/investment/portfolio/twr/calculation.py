@@ -1,13 +1,11 @@
-import calendar
 from datetime import date, timedelta
 from typing import Final, NamedTuple
 
-from investment.portfolio.transaction import Action, Deposit, Trade, Transaction
+from investment.portfolio.transaction import Action, Deposit, Trade, Transaction, get_period
 from investment.portfolio.twr._market_price_repository import MarketPriceRepository
 from investment.portfolio.twr.portfolio import Holding, Holdings, PortfolioSnapshot
 from investment.returns.returns import DailyReturnSeries
 from investment.util.util import EUR
-from investment.vo.value_objects import Period
 
 
 class DailyReturn(NamedTuple):
@@ -18,12 +16,9 @@ class _PortfolioSnapshotSeriesGenerator:
     def __init__(self, transactions:list[Transaction], reporting_currency:str=EUR) -> None:
         self.transactions = transactions
         self.reporting_currency = reporting_currency
-        self.market_price_repository = MarketPriceRepository(self._get_end_date())
+        self.period = get_period(transactions)
+        self.market_price_repository = MarketPriceRepository(self.period.to_date)
         self.reporting_currency:str = reporting_currency
-    def _get_end_date(self) -> date:
-        last_date = self.transactions[-1].date
-        last_day_of_month = calendar.monthrange(last_date.year, last_date.month)[1]
-        return last_date.replace(day=last_day_of_month)
     def generate(self) -> dict[date,PortfolioSnapshot]:
         # Assumes transactions is already sorted by date ascendingly: the last
         # element is taken as the end date, and snapshots are chained in the
@@ -36,8 +31,7 @@ class _PortfolioSnapshotSeriesGenerator:
 
         transactions_by_date = group_transactions_by_date()
 
-        first_date = self.transactions[0].date
-        previous_portfolio_snapshot = PortfolioSnapshot(first_date, 0, Holdings({}), [])
+        previous_portfolio_snapshot = PortfolioSnapshot(self.period.from_date, 0, Holdings({}), [])
         portfolio_snapshots:dict[date,PortfolioSnapshot] = {}
         for _date, daily_transactions in transactions_by_date.items():
             snapshot = self._new_snapshot(daily_transactions, previous_portfolio_snapshot)
@@ -81,8 +75,6 @@ class _PortfolioSnapshotSeriesGenerator:
         # transaction days - a day with no transactions still has to reflect
         # that day's market move. existing_snapshots[period.from_date] is
         # guaranteed present since transactions[0].date is a transaction date.
-        period:Period = Period(self.transactions[0].date, self._get_end_date())
-
         def carry_forward_snapshot(
             previous_snapshot:PortfolioSnapshot, _date:date
         ) -> PortfolioSnapshot:
@@ -96,9 +88,9 @@ class _PortfolioSnapshotSeriesGenerator:
             )
 
         complete_snapshots: dict[date,PortfolioSnapshot] = {}
-        previous_snapshot = existing_snapshots[period.from_date]
-        current_date = period.from_date
-        while current_date <= period.to_date:
+        previous_snapshot = existing_snapshots[self.period.from_date]
+        current_date = self.period.from_date
+        while current_date <= self.period.to_date:
             if current_date in existing_snapshots:
                 previous_snapshot = existing_snapshots[current_date]
             else:

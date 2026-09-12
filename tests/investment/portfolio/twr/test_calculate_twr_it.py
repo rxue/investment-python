@@ -46,7 +46,7 @@ def test_calculate_twr_with_two_buy_transactions():
 
     expected_snapshot_count = (end_date - first_trade_date).days + 1
     assert len(snapshots) == expected_snapshot_count
-    assert len(daily_returns) == expected_snapshot_count - 1
+    assert len(daily_returns.value_by_date) == expected_snapshot_count - 1
 
     first_snapshot = snapshots[0]
     assert first_snapshot.date == first_trade_date
