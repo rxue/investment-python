@@ -83,8 +83,6 @@ def fetch_current_metrics(
             combined_metrics[Metric.PRICE] = e
     if Metric.PRICE_IN_EURO in metrics:
         existing_price = combined_metrics.get(Metric.PRICE)
-        if not isinstance(existing_price, Price):
-            existing_price = None
         try:
             price = existing_price if existing_price is not None else fetch_price(company_id)
             combined_metrics[Metric.PRICE_IN_EURO] = _fetch_price_in_euro(price)
