@@ -42,7 +42,8 @@ def _fetch_price_in_euro(existing_price: Price) -> Price:
     if currency == EUR:
         return existing_price
     else:
-        _, fx_rate = fetch_fx_rate_from_euro(currency, existing_price.date())
+        fx_rate_currency = "GBP" if currency == "GBp" else currency
+        _, fx_rate = fetch_fx_rate_from_euro(fx_rate_currency, existing_price.date())
         price_value_in_euro = convert_to_euro_cent(existing_price, fx_rate)
         return Price(price_value_in_euro, EUR, existing_price.timestamp)
 

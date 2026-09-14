@@ -4,18 +4,21 @@
 These hit the real Yahoo Finance and ECB APIs over the network (no
 mocking) - hence "IT" rather than a unit test.
 """
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta, timezone
+from decimal import Decimal
 from typing import Final
 
 import pytest
 
 from investment.marketquote.metrics import Metric
 from investment.marketquote.repository import (
+    _fetch_price_in_euro,
     fetch_current_metrics,
+    fetch_fx_rate_from_euro,
     fetch_fx_rate_series_from_euro,
     fetch_historical_prices,
 )
-from investment.vo.value_objects import Period
+from investment.vo.value_objects import Period, Price
 
 pytestmark = pytest.mark.integration
 
@@ -27,6 +30,28 @@ def test_fetch_current_metrics_when_company_does_not_exist_thus_has_no_price():
     """
     metric_record = fetch_current_metrics("NOTHING", [Metric.PRICE,Metric.PRICE_IN_EURO])
     assert metric_record.has_errors() is True
+
+
+def test_fetch_price_in_euro_converts_a_gbp_pence_price():
+    """UK-listed stocks (e.g. BATS.L) are quoted by Yahoo Finance in pence
+    under the non-ISO currency code ``"GBp"`` rather than pounds sterling
+    (``"GBP"``). ``_fetch_price_in_euro`` should recognize that convention -
+    converting pence to pounds before applying the EUR/GBP exchange rate -
+    rather than passing ``"GBp"`` straight through to the ECB API, which only
+    knows ISO 4217 codes and 404s on it.
+    """
+    price = Price(
+        cent_value=4137,
+        currency="GBp",
+        timestamp=datetime(2025, 12, 30, tzinfo=timezone.utc),
+    )
+
+    price_in_euro = _fetch_price_in_euro(price)
+
+    assert price_in_euro.currency == "EUR"
+    _, fx_rate = fetch_fx_rate_from_euro("GBP", price.date())
+    expected_cent_value = round((price.cent_value / Decimal(100)) / fx_rate)
+    assert price_in_euro.cent_value == expected_cent_value
 
 
 def test_fetch_fx_rate_series_from_euro_returns_daily_rates_for_period():
